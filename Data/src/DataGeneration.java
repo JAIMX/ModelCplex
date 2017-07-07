@@ -157,7 +157,7 @@ public class DataGeneration {
         out.println("}");
         
         //truckCapacity
-        out.println("truckCpacity={");
+        out.println("truckCapacity={");
         for(int i=0;i<numberOfCity*numberOfTrucksPerCity;i++){
             if(i%numberOfTrucksPerCity==numberOfTrucksPerCity-1){
                 out.println("'t"+toStringCity(i/numberOfTrucksPerCity)+"-"+i%numberOfTrucksPerCity+"':"+truckCapacity+",");
