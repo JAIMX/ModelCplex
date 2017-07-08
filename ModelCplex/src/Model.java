@@ -452,10 +452,21 @@ public class Model {
             }
             cplex.addMinimize(obj);
 
-            // ---constraint 1 & 2&4---//
-            IloLinearNumExpr constraint1 = cplex.linearNumExpr();
+            // ---constraint 1 & 2 & 4---//
             IloLinearNumExpr constraint2 = cplex.linearNumExpr();
             IloLinearNumExpr constraint4 = cplex.linearNumExpr();
+            
+            for(int k=0;k<numberOfTrucks;k++){
+            	for(int i=0;i<numberOfCities;i++){
+            		
+                    IloLinearNumExpr constraint1 = cplex.linearNumExpr();
+                    
+            		for(int j=0;j<numberOfCities;j++){
+            			constraint1.addTerm(1,X[j][i][k]);
+            			constraint1.addTerm(-1,X[j][i][k]);
+            		}
+            	}
+            }
             
             
 
