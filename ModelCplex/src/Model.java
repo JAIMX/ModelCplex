@@ -2,12 +2,20 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
+import ilog.concert.IloException;
+import ilog.concert.IloIntVar;
+import ilog.concert.IloLinearIntExpr;
+import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
+import ilog.cplex.*;
+
 public class Model {
     private HashMap<String, Integer> cityIndex;
     private HashMap<String, Integer> truckIndex;
     private int numberOfCities;
     private int numberOfTrucks;
     private HashSet<demandPair> demandPairs;
+    private int numberOfDemandPair;
     private double x[];
     private double y[];
     private double[][] distance;
@@ -25,6 +33,8 @@ public class Model {
     private int[] truckCapacity;
     private ArrayList<Integer>[] nodeTrucks;
 
+    private IloCplex cplex;
+
     private class demandPair {
         private int s;
         private int t;
@@ -36,7 +46,6 @@ public class Model {
         cityIndex = new HashMap<String, Integer>();
         truckIndex = new HashMap<String, Integer>();
         demandPairs = new HashSet<demandPair>();
-
 
     }
 
@@ -94,6 +103,8 @@ public class Model {
 
             temp = in.nextLine();
         }
+
+        numberOfDemandPair = demandPairs.size();
 
         temp = in.nextLine();
         assert (temp.substring(0, 4) == "coord") : "Wrong coordinate";
@@ -307,16 +318,16 @@ public class Model {
             temp = in.nextLine();
         }
         // ---read "truckStartNode"---//
-        nodeTrucks=new ArrayList[numberOfCities];
-        for(int i=0;i<numberOfCities;i++){
-            ArrayList<Integer> tempArrayList=new ArrayList<Integer>();
-            nodeTrucks[i]=tempArrayList;
+        nodeTrucks = new ArrayList[numberOfCities];
+        for (int i = 0; i < numberOfCities; i++) {
+            ArrayList<Integer> tempArrayList = new ArrayList<Integer>();
+            nodeTrucks[i] = tempArrayList;
         }
-        
-        temp=in.nextLine();
+
+        temp = in.nextLine();
         assert (temp.substring(0, 4) == "truck") : "Wrong truckStartNode";
-        temp=in.nextLine();
-        
+        temp = in.nextLine();
+
         while (!temp.equals("}")) {
             lIndex = temp.indexOf("'", 0);
             rIndex = temp.indexOf("'", lIndex + 1);
@@ -324,9 +335,9 @@ public class Model {
             int index2 = temp.indexOf(",", rIndex + 1);
 
             while (lIndex >= 0) {
-                
-                int truckIndexTemp=truckIndex.get(temp.substring(lIndex+1,rIndex));
-                int cityIndexTemp=cityIndex.get(temp.substring(index1+1,index2));
+
+                int truckIndexTemp = truckIndex.get(temp.substring(lIndex + 1, rIndex));
+                int cityIndexTemp = cityIndex.get(temp.substring(index1 + 1, index2));
                 nodeTrucks[cityIndexTemp].add(truckIndexTemp);
 
                 lIndex = temp.indexOf("'", index2 + 1);
@@ -339,13 +350,121 @@ public class Model {
             }
             temp = in.nextLine();
         }
-        
-//        for(int i=0;i<numberOfCities;i++){
-//            System.out.println(nodeTrucks[i].toString());
-//        }
-        
-        
-        
+
+        // private HashMap<String, Integer> cityIndex;
+        // private HashMap<String, Integer> truckIndex;
+        // private int numberOfCities;
+        // private int numberOfTrucks;
+        // private HashSet<demandPair> demandPairs;
+        // private double x[];
+        // private double y[];
+        // private double[][] distance;
+        // private double[] openTime;
+        // private double[] closeTime;
+        // private double[] arrivalTime;
+        // private double[] processingTime;
+        // private int M;
+        // private double fixedCost;
+        // private double transportationCost;
+        // private int legLimit;
+        // private double distanceLimit;
+        // private double averageSpeed;
+        // private double drivingTimePerDay;
+        // private int[] truckCapacity;
+        // private ArrayList<Integer>[] nodeTrucks;
+
+        // ---Output---//
+        // System.out.println("number of cities= "+numberOfCities);
+        // System.out.println("number of trucks= "+numberOfTrucks);
+
+    }
+
+    public void ModelBuilding() {
+        try {
+            cplex = new IloCplex();
+            // ---decision variables---//
+            IloIntVar[][][] X = new IloIntVar[numberOfCities][numberOfCities][numberOfTrucks];
+            IloIntVar[][][][][] x = new IloIntVar[numberOfCities][numberOfCities][numberOfTrucks][numberOfCities][numberOfCities];
+            IloNumVar[][][][][] y = new IloNumVar[numberOfCities][numberOfCities][numberOfTrucks][numberOfCities][numberOfCities];
+            IloNumVar[][] ta = new IloNumVar[numberOfTrucks][numberOfCities];
+            IloNumVar[][] td = new IloNumVar[numberOfTrucks][numberOfCities];
+
+            for (int i = 0; i < numberOfCities; i++) {
+                for (int j = 0; j < numberOfCities; j++) {
+                    for (int k = 0; k < numberOfTrucks; k++) {
+
+                        if (i != j) {
+                            X[i][j][k] = cplex.intVar(0, 1, "X" + i + "," + j + "," + k);
+                        } else {
+                            X[i][j][k] = cplex.intVar(0, 0, "X" + i + "," + j + "," + k);
+                        }
+
+                        for (int s = 0; s < numberOfCities; s++) {
+                            for (int t = 0; t < numberOfCities; t++) {
+                                if (s == t || i == j) {
+                                    x[i][j][k][s][t] = cplex.intVar(0, 0,
+                                            "x" + i + "," + j + "," + k + "," + s + "," + t);
+                                    y[i][j][k][s][t] = cplex.numVar(0, 0,
+                                            "y" + i + "," + j + "," + k + "," + s + "," + t);
+                                } else {
+                                    x[i][j][k][s][t] = cplex.intVar(0, 1,
+                                            "x" + i + "," + j + "," + k + "," + s + "," + t);
+                                    y[i][j][k][s][t] = cplex.numVar(0, Double.MAX_VALUE,
+                                            "y" + i + "," + j + "," + k + "," + s + "," + t);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int k = 0; k < numberOfTrucks; k++) {
+                for (int i = 0; i < numberOfCities; i++) {
+                    ta[k][i] = cplex.numVar(0, Double.MAX_VALUE, "ta" + k + "," + i);
+                    td[k][i] = cplex.numVar(0, Double.MAX_VALUE, "td" + k + "," + i);
+                }
+            }
+
+            // ---Objective---//
+            IloLinearNumExpr obj = cplex.linearNumExpr();
+
+            double parameter = fixedCost / (averageSpeed * drivingTimePerDay);
+            for (int i = 0; i < numberOfCities; i++) {
+                for (int j = 0; j < numberOfCities; j++) {
+                    for (int k = 0; k < numberOfTrucks; k++) {
+
+                        obj.addTerm(parameter * distance[i][j], X[i][j][k]);
+
+                    }
+                }
+            }
+
+            for (int k = 0; k < numberOfTrucks; k++) {
+                for (demandPair ele : demandPairs) {
+                    for (int i = 0; i < numberOfCities; i++) {
+                        for (int j = 0; j < numberOfCities; j++) {
+
+                            obj.addTerm(transportationCost * distance[i][j], y[i][j][k][ele.s][ele.t]);
+
+                        }
+                    }
+                }
+            }
+            cplex.addMinimize(obj);
+
+            // ---constraint 1 & 2&4---//
+            IloLinearNumExpr constraint1 = cplex.linearNumExpr();
+            IloLinearNumExpr constraint2 = cplex.linearNumExpr();
+            IloLinearNumExpr constraint4 = cplex.linearNumExpr();
+            
+            
+
+
+        } catch (IloException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
     }
 
     public static void main(String[] args) throws IOException {
