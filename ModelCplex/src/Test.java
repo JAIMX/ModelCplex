@@ -24,9 +24,10 @@ public class Test {
 		IloCplex cplex = new IloCplex();
 		IloLinearNumExpr constraint = cplex.linearNumExpr();
 		IloIntVar[] x = new IloIntVar[3];
+		x[0]=cplex.intVar(0, 1,"x1");
 		
 		constraint=cplex.linearNumExpr();
-		constraint.addTerm(1, x[1]);
+		constraint.addTerm(1, x[0]);
 		System.out.println(constraint.toString());
 	}
 }
