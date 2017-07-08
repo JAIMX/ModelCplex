@@ -4,7 +4,6 @@ import java.util.*;
 
 import ilog.concert.IloException;
 import ilog.concert.IloIntVar;
-import ilog.concert.IloLinearIntExpr;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.*;
@@ -31,7 +30,8 @@ public class Model {
     private double averageSpeed;
     private double drivingTimePerDay;
     private int[] truckCapacity;
-    private ArrayList<Integer>[] nodeTrucks;
+    // private ArrayList<Integer>[] nodeTrucks;
+    private int[] truckStartNode;
 
     private IloCplex cplex;
 
@@ -134,7 +134,7 @@ public class Model {
         for (int i = 0; i < numberOfCities; i++) {
             for (int j = i; j < numberOfCities; j++) {
                 if (i == j) {
-                    distance[i][j] = Double.MAX_VALUE;
+                    distance[i][j] = 0;
                 } else {
                     distance[i][j] = Math.sqrt(Math.pow((x[i] - x[j]), 2) + Math.pow((y[i] - y[j]), 2));
                     distance[j][i] = distance[i][j];
@@ -318,11 +318,7 @@ public class Model {
             temp = in.nextLine();
         }
         // ---read "truckStartNode"---//
-        nodeTrucks = new ArrayList[numberOfCities];
-        for (int i = 0; i < numberOfCities; i++) {
-            ArrayList<Integer> tempArrayList = new ArrayList<Integer>();
-            nodeTrucks[i] = tempArrayList;
-        }
+        truckStartNode = new int[numberOfTrucks];
 
         temp = in.nextLine();
         assert (temp.substring(0, 4) == "truck") : "Wrong truckStartNode";
@@ -338,7 +334,7 @@ public class Model {
 
                 int truckIndexTemp = truckIndex.get(temp.substring(lIndex + 1, rIndex));
                 int cityIndexTemp = cityIndex.get(temp.substring(index1 + 1, index2));
-                nodeTrucks[cityIndexTemp].add(truckIndexTemp);
+                truckStartNode[truckIndexTemp] = cityIndexTemp;
 
                 lIndex = temp.indexOf("'", index2 + 1);
                 if (lIndex >= 0) {
@@ -350,6 +346,8 @@ public class Model {
             }
             temp = in.nextLine();
         }
+
+        // System.out.println(Arrays.toString(truckStartNode));
 
         // private HashMap<String, Integer> cityIndex;
         // private HashMap<String, Integer> truckIndex;
@@ -452,24 +450,113 @@ public class Model {
             }
             cplex.addMinimize(obj);
 
-            // ---constraint 1 & 2 & 4---//
-            IloLinearNumExpr constraint2 = cplex.linearNumExpr();
-            IloLinearNumExpr constraint4 = cplex.linearNumExpr();
-            
-            for(int k=0;k<numberOfTrucks;k++){
-            	for(int i=0;i<numberOfCities;i++){
-            		
-                    IloLinearNumExpr constraint1 = cplex.linearNumExpr();
-                    
-            		for(int j=0;j<numberOfCities;j++){
-            			constraint1.addTerm(1,X[j][i][k]);
-            			constraint1.addTerm(-1,X[j][i][k]);
-            		}
-            	}
-            }
-            
-            
+            // ---constraint 1 & 3 & 4---//
+            for (int k = 0; k < numberOfTrucks; k++) {
 
+                IloLinearNumExpr constraint3 = cplex.linearNumExpr();
+                IloLinearNumExpr constraint4 = cplex.linearNumExpr();
+
+                for (int i = 0; i < numberOfCities; i++) {
+
+                    IloLinearNumExpr constraint1 = cplex.linearNumExpr();
+
+                    for (int j = 0; j < numberOfCities; j++) {
+                        constraint1.addTerm(1, X[j][i][k]);
+                        constraint1.addTerm(-1, X[i][j][k]);
+
+                        constraint3.addTerm(1, X[i][j][k]);
+                        constraint4.addTerm(distance[i][j], X[i][j][k]);
+                    }
+                    cplex.addEq(0, constraint1);
+                }
+
+                cplex.addGe(legLimit, constraint3);
+                // System.out.println("Constrint3 is "+constraint3.toString());
+                cplex.addGe(distanceLimit, constraint4);
+            }
+
+            // ---constraint 2---//
+            for (int k = 0; k < numberOfTrucks; k++) {
+                int startNode = truckStartNode[k];
+                IloLinearNumExpr constraint2 = cplex.linearNumExpr();
+
+                for (int j = 0; j < numberOfCities; j++) {
+                    constraint2.addTerm(1, X[startNode][j][k]);
+                }
+                cplex.addGe(1, constraint2);
+                // System.out.println(constraint2.toString());
+            }
+
+            // ---constraint 7-1,7-2,8-1,8-2 ---//
+            // for(int k=0;k<numberOfTrucks;k++){
+            // for(int i=0;i<numberOfCities;i++){
+            // IloLinearNumExpr constraint7_1 = cplex.linearNumExpr();
+            // IloLinearNumExpr constraint7_2 = cplex.linearNumExpr();
+            // IloLinearNumExpr constraint8_1 = cplex.linearNumExpr();
+            // IloLinearNumExpr constraint8_2 = cplex.linearNumExpr();
+            // for(int j=0;j<numberOfCities;j++){
+            // constraint7_1.addTerm((-1)*M, X[j][i][k]);
+            // constraint7_2.addTerm((-1)*M, X[j][i][k]);
+            // constraint8_1.addTerm(M, X[j][i][k]);
+            // constraint8_2.addTerm(M, X[j][i][k]);
+            // }
+            //
+            //
+            // constraint7_1.addTerm(-1,td[k][i]%24);
+            // constraint7_2.addTerm(-1,ta[k][i]%24);
+            // constraint8_1.addTerm(-1,td[k][i]);
+            // constraint8_2.addTerm(-1,ta[k][i]);
+            //
+            // cplex.addLe(-closeTime[], e)
+            // }
+            // }
+
+            // ---constraint 5 ---//
+            for (int k = 0; k < numberOfTrucks; k++) {
+                for (int i = 0; i < numberOfCities; i++) {
+                    IloLinearNumExpr constraint5 = cplex.linearNumExpr();
+                    for (int j = 0; j < numberOfCities; j++) {
+                        constraint5.addTerm(M, X[j][i][k]);
+                    }
+                    constraint5.addTerm(1, td[k][i]);
+                    System.out.println(constraint5.toString());
+                    cplex.addGe(arrivalTime[i] + M, constraint5);
+                }
+            }
+
+            // ---constraint 5 (lack)---//
+
+            // ---constraint 9 & 10 ---//
+            for (int k = 0; k < numberOfTrucks; k++) {
+                for (int i = 0; i < numberOfCities; i++) {
+                    for (int j = 0; j < numberOfCities; j++) {
+                        if (i != j) {
+                            IloLinearNumExpr constraint9 = cplex.linearNumExpr();
+                            IloLinearNumExpr constraint10 = cplex.linearNumExpr();
+
+                            constraint9.addTerm(1, ta[k][j]);
+                            constraint10.addTerm(1, ta[k][j]);
+
+                            constraint9.addTerm(-1, td[k][i]);
+                            constraint10.addTerm(-1, td[k][i]);
+
+                            constraint9.addTerm(M, X[i][j][k]);
+                            constraint10.addTerm((-1) * M, X[i][j][k]);
+
+                            cplex.addGe((distance[i][j] / averageSpeed) + M, constraint9);
+                            cplex.addLe((distance[i][j] / averageSpeed) - M, constraint10);
+
+                            System.out.println(constraint9.toString());
+                            System.out.println(constraint10.toString());
+                        }
+                    }
+                }
+            }
+
+            // cplex.solve();
+            // System.out.println(cplex.solve());
+            // cplex.exportModel("test.lp");
+            // System.out.println(cplex.toString());
 
         } catch (IloException e) {
             // TODO Auto-generated catch block
@@ -481,5 +568,6 @@ public class Model {
     public static void main(String[] args) throws IOException {
         Model model = new Model();
         model.readData("out.txt");
+        model.ModelBuilding();
     }
 }
