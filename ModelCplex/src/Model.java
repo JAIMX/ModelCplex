@@ -708,6 +708,8 @@ public class Model {
             // System.out.println(cplex.solve());
             // cplex.exportModel("test.lp");
             // System.out.println(cplex.toString());
+
+            // output the solution
             PrintWriter out = new PrintWriter("outcome.txt");
 
             for (int i = 0; i < numberOfCities; i++) {
@@ -715,22 +717,41 @@ public class Model {
                     for (int k = 0; k < numberOfTrucks; k++) {
                         if (cplex.getValue(X[i][j][k]) != 0) {
                             out.println(X[i][j][k].getName() + "=" + cplex.getValue(X[i][j][k]));
-                            System.out.println(X[i][j][k].getName() + "=" + cplex.getValue(X[i][j][k]));
+//                            System.out.println(X[i][j][k].getName() + "=" + cplex.getValue(X[i][j][k]));
                         }
                     }
                 }
             }
 
+            // for (int i = 0; i < numberOfCities; i++) {
+            // for (int j = 0; j < numberOfCities; j++) {
+            // if(i!=j){
+            // for (int k = 0; k < numberOfTrucks; k++) {
+            // for (int od = 0; od < numberOfDemandPair; od++) {
+            //// System.out.println("i=" + i + ", j=" + j + ", k=" + k + ", od="
+            // + od);
+            // if (cplex.getValue(x[i][j][k][od]) != 0){
+            // out.println(x[i][j][k][od].getName() + "=" +
+            // cplex.getValue(x[i][j][k][od]));
+            //// System.out.println(x[i][j][k][od].getName() + "=" +
+            // cplex.getValue(x[i][j][k][od]));
+            // }
+            // }
+            // }
+            // }
+            //
+            // }
+            // }
             for (int i = 0; i < numberOfCities; i++) {
                 for (int j = 0; j < numberOfCities; j++) {
-                    if(i!=j){
-                        for (int k = 0; k < numberOfTrucks; k++) {
-                            for (int od = 0; od < numberOfDemandPair; od++) {
-//                                System.out.println("i=" + i + ", j=" + j + ", k=" + k + ", od=" + od);
-                                if (cplex.getValue(x[i][j][k][od]) != 0){
-                                    out.println(x[i][j][k][od].getName() + "=" + cplex.getValue(x[i][j][k][od]));
-//                                    System.out.println(x[i][j][k][od].getName() + "=" + cplex.getValue(x[i][j][k][od]));
-                                }
+
+                    for (int k = 0; k < numberOfTrucks; k++) {
+                        for (int od = 0; od < numberOfDemandPair; od++) {
+                            System.out.println("i=" + i + ", j=" + j + ", k=" + k + ", od=" + od);
+                            if (cplex.getValue(x[i][j][k][od]) != 0) {
+                                out.println(x[i][j][k][od].getName() + "=" + cplex.getValue(x[i][j][k][od]));
+                                // System.out.println(x[i][j][k][od].getName() +
+                                // "=" + cplex.getValue(x[i][j][k][od]));
                             }
                         }
                     }
