@@ -713,7 +713,7 @@ public class Model {
 
             cplex.solve();
             // System.out.println(cplex.solve());
-            // cplex.exportModel("test.lp");
+            cplex.exportModel("Model.lp");
             // System.out.println(cplex.toString());
             // System.out.println(cplex.getValue(x[0][0][0][2]));
 
@@ -863,24 +863,24 @@ public class Model {
         }
 
         // ta[k][i]
-//        out.println();
-//        out.println("ta[k][i]");
+        // out.println();
+        // out.println("ta[k][i]");
         for (int k = 0; k < numberOfTrucks; k++) {
             for (int i = 0; i < numberOfCities; i++) {
                 if (cplex.getValue(ta[k][i]) != 0)
                     out.println(ta[k][i].getName() + "=" + cplex.getValue(ta[k][i]));
-//                out.print(cplex.getValue(ta[k][i]) + " ");
+                // out.print(cplex.getValue(ta[k][i]) + " ");
             }
         }
 
         // td[k][i]
-//        out.println();
-//        out.println("td[k][i]");
+        // out.println();
+        // out.println("td[k][i]");
         for (int k = 0; k < numberOfTrucks; k++) {
             for (int i = 0; i < numberOfCities; i++) {
                 if (cplex.getValue(td[k][i]) != 0)
                     out.println(td[k][i].getName() + "=" + cplex.getValue(td[k][i]));
-//                out.print(cplex.getValue(td[k][i]) + " ");
+                // out.print(cplex.getValue(td[k][i]) + " ");
             }
         }
 
