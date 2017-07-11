@@ -9,6 +9,7 @@ import ilog.concert.IloIntVar;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.*;
+import ilog.cplex.IloCplex.UnknownObjectException;
 
 public class Model {
     private HashMap<String, Integer> cityIndex;
@@ -18,8 +19,8 @@ public class Model {
     // private HashSet<demandPair> demandPairs;
     private ArrayList<demandPair> demandPairs;
     private int numberOfDemandPair;
-    private double x[];
-    private double y[];
+    private double xx[];
+    private double yy[];
     private double[][] distance;
     private double[] openTime;
     private double[] closeTime;
@@ -33,7 +34,13 @@ public class Model {
     private double averageSpeed;
     private double drivingTimePerDay;
     private int[] truckCapacity;
-    // private ArrayList<Integer>[] nodeTrucks;
+
+    private IloIntVar[][][] X;
+    private IloIntVar[][][][] x;
+    private IloNumVar[][][][] y;
+    private IloNumVar[][] ta;
+    private IloNumVar[][] td;
+
     private int[] truckStartNode;
 
     private IloCplex cplex;
@@ -112,8 +119,8 @@ public class Model {
         temp = in.nextLine();
         assert (temp.substring(0, 4) == "coord") : "Wrong coordinate";
         // ---read "coordinate"---//
-        x = new double[numberOfCities];
-        y = new double[numberOfCities];
+        xx = new double[numberOfCities];
+        yy = new double[numberOfCities];
         distance = new double[numberOfCities][numberOfCities];
         temp = in.nextLine();
 
@@ -124,8 +131,8 @@ public class Model {
 
             lIndex = temp.indexOf("(", rIndex + 1);
             rIndex = temp.indexOf(",", lIndex + 1);
-            x[city] = Double.valueOf(temp.substring(lIndex + 1, rIndex));
-            y[city] = Double.valueOf(temp.substring(rIndex + 1, temp.length() - 1));
+            xx[city] = Double.valueOf(temp.substring(lIndex + 1, rIndex));
+            yy[city] = Double.valueOf(temp.substring(rIndex + 1, temp.length() - 1));
             // System.out.println(city);
             // System.out.println("x="+x[city]);
             // System.out.println("y="+y[city]);
@@ -139,7 +146,7 @@ public class Model {
                 if (i == j) {
                     distance[i][j] = 0;
                 } else {
-                    distance[i][j] = Math.sqrt(Math.pow((x[i] - x[j]), 2) + Math.pow((y[i] - y[j]), 2));
+                    distance[i][j] = Math.sqrt(Math.pow((xx[i] - xx[j]), 2) + Math.pow((yy[i] - yy[j]), 2));
                     distance[j][i] = distance[i][j];
                 }
             }
@@ -384,11 +391,11 @@ public class Model {
         try {
             cplex = new IloCplex();
             // ---decision variables---//
-            IloIntVar[][][] X = new IloIntVar[numberOfCities][numberOfCities][numberOfTrucks];
-            IloIntVar[][][][] x = new IloIntVar[numberOfCities][numberOfCities][numberOfTrucks][numberOfDemandPair];
-            IloNumVar[][][][] y = new IloNumVar[numberOfCities][numberOfCities][numberOfTrucks][numberOfDemandPair];
-            IloNumVar[][] ta = new IloNumVar[numberOfTrucks][numberOfCities];
-            IloNumVar[][] td = new IloNumVar[numberOfTrucks][numberOfCities];
+            X = new IloIntVar[numberOfCities][numberOfCities][numberOfTrucks];
+            x = new IloIntVar[numberOfCities][numberOfCities][numberOfTrucks][numberOfDemandPair];
+            y = new IloNumVar[numberOfCities][numberOfCities][numberOfTrucks][numberOfDemandPair];
+            ta = new IloNumVar[numberOfTrucks][numberOfCities];
+            td = new IloNumVar[numberOfTrucks][numberOfCities];
 
             for (int i = 0; i < numberOfCities; i++) {
                 for (int j = 0; j < numberOfCities; j++) {
@@ -654,20 +661,20 @@ public class Model {
                 for (int od = 0; od < numberOfDemandPair; od++) {
                     for (int i = 0; i < numberOfCities; i++) {
                         for (int j = 0; j < numberOfCities; j++) {
-                            if (i != j) {
-                                IloLinearNumExpr constraint16 = cplex.linearNumExpr();
-                                IloLinearNumExpr constraint17 = cplex.linearNumExpr();
+                            // if (i != j) {
+                            IloLinearNumExpr constraint16 = cplex.linearNumExpr();
+                            IloLinearNumExpr constraint17 = cplex.linearNumExpr();
 
-                                constraint16.addTerm(1, y[i][j][k][od]);
-                                constraint16.addTerm(-M, x[i][j][k][od]);
-                                cplex.addGe(0, constraint16);
-                                // System.out.println(constraint16.toString());
+                            constraint16.addTerm(1, y[i][j][k][od]);
+                            constraint16.addTerm(-M, x[i][j][k][od]);
+                            cplex.addGe(0, constraint16);
+                            // System.out.println(constraint16.toString());
 
-                                constraint17.addTerm(1, x[i][j][k][od]);
-                                constraint17.addTerm(-1, X[i][j][k]);
-                                cplex.addGe(0, constraint17);
-                                // System.out.println(constraint17.toString());
-                            }
+                            constraint17.addTerm(1, x[i][j][k][od]);
+                            constraint17.addTerm(-1, X[i][j][k]);
+                            cplex.addGe(0, constraint17);
+                            // System.out.println(constraint17.toString());
+                            // }
                         }
                     }
                 }
@@ -708,83 +715,7 @@ public class Model {
             // System.out.println(cplex.solve());
             // cplex.exportModel("test.lp");
             // System.out.println(cplex.toString());
-
-            // output the solution
-            PrintWriter out = new PrintWriter("outcome.txt");
-
-            for (int i = 0; i < numberOfCities; i++) {
-                for (int j = 0; j < numberOfCities; j++) {
-                    for (int k = 0; k < numberOfTrucks; k++) {
-                        if (cplex.getValue(X[i][j][k]) != 0) {
-                            out.println(X[i][j][k].getName() + "=" + cplex.getValue(X[i][j][k]));
-//                            System.out.println(X[i][j][k].getName() + "=" + cplex.getValue(X[i][j][k]));
-                        }
-                    }
-                }
-            }
-
-            // for (int i = 0; i < numberOfCities; i++) {
-            // for (int j = 0; j < numberOfCities; j++) {
-            // if(i!=j){
-            // for (int k = 0; k < numberOfTrucks; k++) {
-            // for (int od = 0; od < numberOfDemandPair; od++) {
-            //// System.out.println("i=" + i + ", j=" + j + ", k=" + k + ", od="
-            // + od);
-            // if (cplex.getValue(x[i][j][k][od]) != 0){
-            // out.println(x[i][j][k][od].getName() + "=" +
-            // cplex.getValue(x[i][j][k][od]));
-            //// System.out.println(x[i][j][k][od].getName() + "=" +
-            // cplex.getValue(x[i][j][k][od]));
-            // }
-            // }
-            // }
-            // }
-            //
-            // }
-            // }
-            for (int i = 0; i < numberOfCities; i++) {
-                for (int j = 0; j < numberOfCities; j++) {
-
-                    for (int k = 0; k < numberOfTrucks; k++) {
-                        for (int od = 0; od < numberOfDemandPair; od++) {
-                            System.out.println("i=" + i + ", j=" + j + ", k=" + k + ", od=" + od);
-                            if (cplex.getValue(x[i][j][k][od]) != 0) {
-                                out.println(x[i][j][k][od].getName() + "=" + cplex.getValue(x[i][j][k][od]));
-                                // System.out.println(x[i][j][k][od].getName() +
-                                // "=" + cplex.getValue(x[i][j][k][od]));
-                            }
-                        }
-                    }
-
-                }
-            }
-
-            for (int i = 0; i < numberOfCities; i++) {
-                for (int j = 0; j < numberOfCities; j++) {
-                    for (int k = 0; k < numberOfTrucks; k++) {
-                        for (int od = 0; od < numberOfDemandPair; od++) {
-                            if (cplex.getValue(y[i][j][k][od]) != 0)
-                                out.println(y[i][j][k][od].getName() + "=" + cplex.getValue(y[i][j][k][od]));
-                        }
-                    }
-                }
-            }
-
-            for (int k = 0; k < numberOfTrucks; k++) {
-                for (int i = 0; i < numberOfCities; i++) {
-                    if (cplex.getValue(ta[k][i]) != 0)
-                        out.println(ta[k][i].getName() + "=" + cplex.getValue(ta[k][i]));
-                }
-            }
-
-            for (int k = 0; k < numberOfTrucks; k++) {
-                for (int i = 0; i < numberOfCities; i++) {
-                    if (cplex.getValue(td[k][i]) != 0)
-                        out.println(td[k][i].getName() + "=" + cplex.getValue(td[k][i]));
-                }
-            }
-
-            out.close();
+            // System.out.println(cplex.getValue(x[0][0][0][2]));
 
         } catch (IloException e) {
             // TODO Auto-generated catch block
@@ -793,9 +724,174 @@ public class Model {
 
     }
 
-    public static void main(String[] args) throws IOException {
+    public void output1() throws FileNotFoundException, UnknownObjectException, IloException {
+        // output the solution
+        PrintWriter out = new PrintWriter("outcome1.txt");
+
+        // X[i][j][k]
+        out.println("X[i][j][k]");
+        for (int i = 0; i < numberOfCities; i++) {
+            for (int j = 0; j < numberOfCities; j++) {
+                for (int k = 0; k < numberOfTrucks; k++) {
+                    // if (cplex.getValue(X[i][j][k]) != 0) {
+                    // out.println(X[i][j][k].getName() + "=" +
+                    // cplex.getValue(X[i][j][k]));
+                    // }
+                    out.print(cplex.getValue(X[i][j][k]) + " ");
+                }
+            }
+        }
+
+        // x[i][j][k][od]
+        out.println();
+        out.println("x[i][j][k][od]");
+        for (int i = 0; i < numberOfCities; i++) {
+            for (int j = 0; j < numberOfCities; j++) {
+
+                for (int k = 0; k < numberOfTrucks; k++) {
+                    for (int od = 0; od < numberOfDemandPair; od++) {
+                        // System.out.println("i=" + i + ", j=" + j + ", k="
+                        // + k + ", od=" + od);
+                        // if (cplex.getValue(x[i][j][k][od]) != 0) {
+                        // out.println(x[i][j][k][od].getName() + "=" +
+                        // cplex.getValue(x[i][j][k][od]));
+                        // System.out.println(x[i][j][k][od].getName() +
+                        // "=" + cplex.getValue(x[i][j][k][od]));
+                        out.print(cplex.getValue(x[i][j][k][od]) + " ");
+
+                    }
+                }
+
+            }
+        }
+
+        // y[i][j][k][od]
+        out.println();
+        out.println("y[i][j][k][od]");
+
+        for (int i = 0; i < numberOfCities; i++) {
+            for (int j = 0; j < numberOfCities; j++) {
+                for (int k = 0; k < numberOfTrucks; k++) {
+                    for (int od = 0; od < numberOfDemandPair; od++) {
+                        // if (cplex.getValue(y[i][j][k][od]) != 0)
+                        // out.println(y[i][j][k][od].getName() + "=" +
+                        // cplex.getValue(y[i][j][k][od]));
+                        // }
+                        out.print(cplex.getValue(y[i][j][k][od]) + " ");
+                    }
+                }
+            }
+        }
+
+        // ta[k][i]
+        out.println();
+        out.println("ta[k][i]");
+        for (int k = 0; k < numberOfTrucks; k++) {
+            for (int i = 0; i < numberOfCities; i++) {
+                // if (cplex.getValue(ta[k][i]) != 0)
+                // out.println(ta[k][i].getName() + "=" +
+                // cplex.getValue(ta[k][i]));
+                out.print(cplex.getValue(ta[k][i]) + " ");
+            }
+        }
+
+        // td[k][i]
+        out.println();
+        out.println("td[k][i]");
+        for (int k = 0; k < numberOfTrucks; k++) {
+            for (int i = 0; i < numberOfCities; i++) {
+                // if (cplex.getValue(td[k][i]) != 0)
+                // out.println(td[k][i].getName() + "=" +
+                // cplex.getValue(td[k][i]));
+                out.print(cplex.getValue(td[k][i]) + " ");
+            }
+        }
+
+        out.close();
+    }
+
+    public void output2() throws FileNotFoundException, UnknownObjectException, IloException {
+        // output the solution
+        PrintWriter out = new PrintWriter("outcome2.txt");
+
+        // X[i][j][k]
+        // out.println("X[i][j][k]");
+        for (int i = 0; i < numberOfCities; i++) {
+            for (int j = 0; j < numberOfCities; j++) {
+                for (int k = 0; k < numberOfTrucks; k++) {
+                    if (cplex.getValue(X[i][j][k]) != 0) {
+                        out.println(X[i][j][k].getName() + "=" + cplex.getValue(X[i][j][k]));
+                    }
+                    // out.print(cplex.getValue(X[i][j][k]) + " ");
+                }
+            }
+        }
+
+        // x[i][j][k][od]
+        // out.println();
+        // out.println("x[i][j][k][od]");
+        for (int i = 0; i < numberOfCities; i++) {
+            for (int j = 0; j < numberOfCities; j++) {
+
+                for (int k = 0; k < numberOfTrucks; k++) {
+                    for (int od = 0; od < numberOfDemandPair; od++) {
+                        if (cplex.getValue(x[i][j][k][od]) != 0) {
+                            out.println(x[i][j][k][od].getName() + "=" + cplex.getValue(x[i][j][k][od]));
+                            // out.print(cplex.getValue(x[i][j][k][od]) + " ");
+                        }
+                    }
+
+                }
+            }
+        }
+
+        // y[i][j][k][od]
+        // out.println();
+        // out.println("y[i][j][k][od]");
+
+        for (int i = 0; i < numberOfCities; i++) {
+            for (int j = 0; j < numberOfCities; j++) {
+                for (int k = 0; k < numberOfTrucks; k++) {
+                    for (int od = 0; od < numberOfDemandPair; od++) {
+                        if (cplex.getValue(y[i][j][k][od]) != 0) {
+                            out.println(y[i][j][k][od].getName() + "=" + cplex.getValue(y[i][j][k][od]));
+                        }
+                        // out.print(cplex.getValue(y[i][j][k][od]) + " ");
+                    }
+                }
+            }
+        }
+
+        // ta[k][i]
+//        out.println();
+//        out.println("ta[k][i]");
+        for (int k = 0; k < numberOfTrucks; k++) {
+            for (int i = 0; i < numberOfCities; i++) {
+                if (cplex.getValue(ta[k][i]) != 0)
+                    out.println(ta[k][i].getName() + "=" + cplex.getValue(ta[k][i]));
+//                out.print(cplex.getValue(ta[k][i]) + " ");
+            }
+        }
+
+        // td[k][i]
+//        out.println();
+//        out.println("td[k][i]");
+        for (int k = 0; k < numberOfTrucks; k++) {
+            for (int i = 0; i < numberOfCities; i++) {
+                if (cplex.getValue(td[k][i]) != 0)
+                    out.println(td[k][i].getName() + "=" + cplex.getValue(td[k][i]));
+//                out.print(cplex.getValue(td[k][i]) + " ");
+            }
+        }
+
+        out.close();
+    }
+
+    public static void main(String[] args) throws IOException, UnknownObjectException, IloException {
         Model model = new Model();
         model.readData("out.txt");
         model.ModelBuilding();
+        model.output1();
+        model.output2();
     }
 }
