@@ -711,7 +711,23 @@ public class Model {
                 }
             }
 
+//            cplex.setParam(IloCplex.BooleanParam.MemoryEmphasis, true);
+//            cplex.setParam(IloCplex.IntParam.NodeFileInd, 3);
+//            cplex.setParam(IloCplex.StringParam.WorkDir, ".");
+//            cplex.setParam(IloCplex.DoubleParam.TreLim, 100000);
+//            cplex.setParam(IloCplex.Param.WorkMem, 1024);
+            
+            
+            cplex.setParam(IloCplex.Param.RootAlgorithm, IloCplex.Algorithm.Primal);
+            cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
+            cplex.setParam(IloCplex.IntParam.NodeFileInd, 2);
+            cplex.setParam(IloCplex.IntParam.Threads, 1);
+            // formulation1.setParam(IloCplex.Param.MIP.Strategy.File,3); // not needed when Emphasis.Memory==true
+//            cplex.setParam(IloCplex.Param.Emphasis.MIP, 3);
+            cplex.setParam(IloCplex.Param.WorkMem, 1024);
+            
             cplex.solve();
+
             // System.out.println(cplex.solve());
             cplex.exportModel("Model.lp");
             // System.out.println(cplex.toString());
@@ -889,9 +905,9 @@ public class Model {
 
     public static void main(String[] args) throws IOException, UnknownObjectException, IloException {
         Model model = new Model();
-        model.readData("out.txt");
+        model.readData("out2.txt");
         model.ModelBuilding();
-        model.output1();
-        model.output2();
+         model.output1();
+         model.output2();
     }
 }
