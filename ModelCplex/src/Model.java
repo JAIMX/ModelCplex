@@ -34,14 +34,13 @@ public class Model {
     private double averageSpeed;
     private double drivingTimePerDay;
     private int[] truckCapacity;
+    private int[] truckStartNode;
 
     private IloIntVar[][][] X;
     private IloIntVar[][][][] x;
     private IloNumVar[][][][] y;
     private IloNumVar[][] ta;
     private IloNumVar[][] td;
-
-    private int[] truckStartNode;
 
     private IloCplex cplex;
 
@@ -577,19 +576,56 @@ public class Model {
             }
 
             // ---constraint 11 ---//
+            // for (int k = 0; k < numberOfTrucks; k++) {
+            // for (int i = 0; i < numberOfCities; i++) {
+            // if (i != truckStartNode[k]) {
+            // IloLinearNumExpr constraint11 = cplex.linearNumExpr();
+            // constraint11.addTerm(1, td[k][i]);
+            // constraint11.addTerm(-1, ta[k][i]);
+            // cplex.addEq(processingTime[i], constraint11);
+            // // System.out.println(constraint11.toString());
+            // }
+            // }
+            // }
+
             for (int k = 0; k < numberOfTrucks; k++) {
                 for (int i = 0; i < numberOfCities; i++) {
                     if (i != truckStartNode[k]) {
                         IloLinearNumExpr constraint11 = cplex.linearNumExpr();
                         constraint11.addTerm(1, td[k][i]);
                         constraint11.addTerm(-1, ta[k][i]);
-                        cplex.addEq(processingTime[i], constraint11);
+                        cplex.addLe(processingTime[i], constraint11);
                         // System.out.println(constraint11.toString());
                     }
                 }
             }
 
             // ---constraint 12 ---//
+            // for (int i = 0; i < numberOfCities; i++) {
+            // for (int od = 0; od < numberOfDemandPair; od++) {
+            // for (int k1 = 0; k1 < numberOfTrucks; k1++) {
+            // for (int k2 = 0; k2 < numberOfTrucks; k2++) {
+            // if (k1 != k2) {
+            // for (int i1 = 0; i1 < numberOfCities; i1++) {
+            // for (int i2 = 0; i2 < numberOfCities; i2++) {
+            // if (i1 != i && i2 != i) {
+            // IloLinearNumExpr constraint12 = cplex.linearNumExpr();
+            // constraint12.addTerm(1, ta[k1][i]);
+            // constraint12.addTerm(-1, td[k2][i]);
+            // constraint12.addTerm(M, x[i1][i][k1][od]);
+            // constraint12.addTerm(M, x[i][i2][k2][od]);
+            //
+            // cplex.addGe(2 * M - processingTime[i], constraint12);
+            // // System.out.println(constraint12);
+            // }
+            // }
+            // }
+            // }
+            // }
+            // }
+            // }
+            // }
+            // update to new ones
             for (int i = 0; i < numberOfCities; i++) {
                 for (int od = 0; od < numberOfDemandPair; od++) {
                     for (int k1 = 0; k1 < numberOfTrucks; k1++) {
@@ -601,6 +637,31 @@ public class Model {
                                             IloLinearNumExpr constraint12 = cplex.linearNumExpr();
                                             constraint12.addTerm(1, ta[k1][i]);
                                             constraint12.addTerm(-1, td[k2][i]);
+                                            constraint12.addTerm(M, x[i1][i][k1][od]);
+                                            constraint12.addTerm(M, x[i][i2][k2][od]);
+
+                                            cplex.addGe(2 * M - processingTime[i], constraint12);
+                                            // System.out.println(constraint12);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            for (int i = 0; i < numberOfCities; i++) {
+                for (int od = 0; od < numberOfDemandPair; od++) {
+                    for (int k1 = 0; k1 < numberOfTrucks; k1++) {
+                        for (int k2 = 0; k2 < numberOfTrucks; k2++) {
+                            if (k1 != k2&&truckStartNode[k1]!=i&&truckStartNode[k2]!=i) {
+                                for (int i1 = 0; i1 < numberOfCities; i1++) {
+                                    for (int i2 = 0; i2 < numberOfCities; i2++) {
+                                        if (i1 != i && i2 != i) {
+                                            IloLinearNumExpr constraint12 = cplex.linearNumExpr();
+                                            constraint12.addTerm(1, ta[k2][i]);
+                                            constraint12.addTerm(-1, td[k1][i]);
                                             constraint12.addTerm(M, x[i1][i][k1][od]);
                                             constraint12.addTerm(M, x[i][i2][k2][od]);
 
@@ -711,21 +772,22 @@ public class Model {
                 }
             }
 
-//            cplex.setParam(IloCplex.BooleanParam.MemoryEmphasis, true);
-//            cplex.setParam(IloCplex.IntParam.NodeFileInd, 3);
-//            cplex.setParam(IloCplex.StringParam.WorkDir, ".");
-//            cplex.setParam(IloCplex.DoubleParam.TreLim, 100000);
-//            cplex.setParam(IloCplex.Param.WorkMem, 1024);
-            
-            
+            // cplex.setParam(IloCplex.BooleanParam.MemoryEmphasis, true);
+            // cplex.setParam(IloCplex.IntParam.NodeFileInd, 3);
+            // cplex.setParam(IloCplex.StringParam.WorkDir, ".");
+            // cplex.setParam(IloCplex.DoubleParam.TreLim, 100000);
+            // cplex.setParam(IloCplex.Param.WorkMem, 1024);
+
             cplex.setParam(IloCplex.Param.RootAlgorithm, IloCplex.Algorithm.Primal);
             cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
             cplex.setParam(IloCplex.IntParam.NodeFileInd, 2);
             cplex.setParam(IloCplex.IntParam.Threads, 1);
-            // formulation1.setParam(IloCplex.Param.MIP.Strategy.File,3); // not needed when Emphasis.Memory==true
-//            cplex.setParam(IloCplex.Param.Emphasis.MIP, 3);
+            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.06);
+            // formulation1.setParam(IloCplex.Param.MIP.Strategy.File,3); // not
+            // needed when Emphasis.Memory==true
+            // cplex.setParam(IloCplex.Param.Emphasis.MIP, 3);
             cplex.setParam(IloCplex.Param.WorkMem, 1024);
-            
+
             cplex.solve();
 
             // System.out.println(cplex.solve());
@@ -907,7 +969,7 @@ public class Model {
         Model model = new Model();
         model.readData("out2.txt");
         model.ModelBuilding();
-         model.output1();
-         model.output2();
+        // model.output1();
+        model.output2();
     }
 }
