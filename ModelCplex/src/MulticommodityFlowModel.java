@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -23,6 +24,7 @@ public class MulticommodityFlowModel {
 	private int numberOfDemandPair;
 	private double xx[];
 	private double yy[];
+	private double[][] length;
 	private double[] openTime;
 	private double[] closeTime;
 	private double[] arrivalTime;
@@ -36,8 +38,22 @@ public class MulticommodityFlowModel {
 	private double drivingTimePerDay;
 	private int[] truckCapacity;
 	private int[] truckStartNode;
+	private final int T=72;
 	
-	private ArrayList<ArrayList<Integer>> distance;
+	private class Edge{
+		int pointTo;
+		double length;
+		int setIndex;
+		//hat A=1
+		//AT=2
+		//AO=3
+		//AD=4
+		int u;
+		int v;
+		int t1,t2;
+	}
+	
+	private ArrayList<ArrayList<Edge>> distance;
 	
 	public MulticommodityFlowModel() throws IOException {
 		cityIndex = new HashMap<String, Integer>();
@@ -120,6 +136,20 @@ public class MulticommodityFlowModel {
 			// System.out.println("y="+y[city]);
 
 			temp = in.nextLine();
+		}
+		
+		length=new double[numberOfCities][numberOfCities];
+		
+		// Calculate distance
+		for (int i = 0; i < numberOfCities; i++) {
+			for (int j = i; j < numberOfCities; j++) {
+				if (i == j) {
+					length[i][j] = 0;
+				} else {
+					length[i][j] = Math.sqrt(Math.pow((xx[i] - xx[j]), 2) + Math.pow((yy[i] - yy[j]), 2));
+					length[j][i] = length[i][j];
+				}
+			}
 		}
 		
 		
@@ -331,14 +361,115 @@ public class MulticommodityFlowModel {
 	}
 
 /**
- * 
+ * Vst index:00,01,...,0T;n-1 0,n-1 1,...,n-1 T  [0,n(T+1)-1]
+ * O index:n0,n1,...,n(n-1)  [n(T+1),n(T+2)-1]
+ * D index:n+1 0,n+1 1,...,n+1(n-1) [n(T+2), n(T+3)-1]
  */
 	public void graphTransfer() {
+		// calculate distance
+		distance=new ArrayList<ArrayList<Edge>>();
 		
+		// only record Vst and O
+		for(int i=0;i<numberOfCities*(T+2);i++) {
+			ArrayList<Edge> templist=new ArrayList<Edge>();
+			distance.add(templist);
+		}
+		
+		//add AT
+		for(int node=0;node<numberOfCities;node++) {
+			for(int t=0;t<T;t++) {
+				Edge edge=new Edge();
+				int nodeIndex=node*(T+1)+t;
+				edge.pointTo=nodeIndex+1;
+				edge.length=0;
+				edge.setIndex=2;
+				edge.u=node;
+				edge.v=node;
+				edge.t1=t;
+				edge.t2=t+1;
+				distance.get(nodeIndex).add(edge);
+			}
+		}
+		
+		//add hat A
+		for(int i=0;i<numberOfCities;i++) {
+			for(int j=0;j<numberOfCities;j++) {
+				if(i!=j) {
+					double time=length[i][j]/averageSpeed;
+					int timeLength=(int) Math.ceil(time);
+					
+					int t=timeLength;
+					int nodeIndex1=i*(T+1);
+					int nodeIndex2=j*(T+1)+timeLength;
+					
+					while(t<=T) {
+						Edge edge=new  Edge();
+						edge.pointTo=nodeIndex2;
+						edge.length=length[i][j];
+						edge.setIndex=1;
+						edge.u=i;
+						edge.v=j;
+						edge.t1=t-timeLength;
+						edge.t2=t;
+						distance.get(nodeIndex1).add(edge);
+						
+						t++;
+						nodeIndex1++;
+						nodeIndex2++;
+					}
+				}
+			}
+		}
+		
+		//add AO:(Ok,n0)
+		for(int o=0;o<numberOfCities;o++) {
+			int oIndex=numberOfCities*(T+1)+o;
+			
+			for(int node=0;node<numberOfCities;node++) {
+				int nodeIndex=node*(T+1);
+				Edge edge=new Edge();
+				edge.pointTo=nodeIndex;
+				edge.length=length[o][node];
+				edge.setIndex=3;
+				edge.u=o;
+				edge.v=node;
+				edge.t1=-1;
+				edge.t2=0;
+				distance.get(oIndex).add(edge);
+			}
+		}
+		
+		//add AD:(nT,Dk)
+		for(int node=0;node<numberOfCities;node++) {
+			int nodeIndex=node*(T+1)+T;
+			for(int d=0;d<numberOfCities;d++) {
+				int dIndex=numberOfCities*(T+2)+d;
+				Edge edge=new Edge();
+				edge.pointTo=dIndex;
+				edge.length=length[node][d];
+				edge.setIndex=4;
+				edge.u=node;
+				edge.v=d;
+				edge.t1=T;
+				edge.t2=-1;
+				distance.get(nodeIndex).add(edge);
+			}
+		}
+		
+//		for(int i=0;i<numberOfCities;i++) {
+//			System.out.println(Arrays.toString(length[i]));
+//		}
+//		for(int index=0;index<distance.size();index++) {
+//			for(Edge e:distance.get(index)) {
+//				System.out.println(e.u+","+e.t1+"->"+e.v+","+e.t2+": "+e.length+" "+e.setIndex);
+//			}
+//			System.out.println();
+//		}
 	}
 	
 	public static void main(String[] args) throws IOException {
 		MulticommodityFlowModel test=new MulticommodityFlowModel();
 		test.readData("out2.txt");
+		test.graphTransfer();
 	}
 }

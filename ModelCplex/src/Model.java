@@ -34,6 +34,7 @@ public class Model {
 	private double drivingTimePerDay;
 	private int[] truckCapacity;
 	private int[] truckStartNode;
+	
 
 	private IloIntVar[][][] X;
 	private IloIntVar[][][][] x;
