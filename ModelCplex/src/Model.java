@@ -16,7 +16,6 @@ public class Model {
 	private HashMap<String, Integer> truckIndex;
 	private int numberOfCities;
 	private int numberOfTrucks;
-	// private HashSet<demandPair> demandPairs;
 	private ArrayList<demandPair> demandPairs;
 	private int numberOfDemandPair;
 	private double xx[];
@@ -203,7 +202,7 @@ public class Model {
 		assert (temp.substring(0, 6) == "arrival") : "Wrong arrivalTime";
 		arrivalTime = new double[numberOfCities];
 
-		// ---read "closeTime"---//
+		// ---read "arrivalTime"---//
 		lIndex = temp.indexOf("'", 0);
 		rIndex = temp.indexOf("'", lIndex + 1);
 
@@ -227,7 +226,7 @@ public class Model {
 		assert (temp.substring(0, 6) == "process") : "Wrong processingTime";
 		processingTime = new double[numberOfCities];
 
-		// ---read "closeTime"---//
+		// ---read "processingTime"---//
 		lIndex = temp.indexOf("'", 0);
 		rIndex = temp.indexOf("'", lIndex + 1);
 
