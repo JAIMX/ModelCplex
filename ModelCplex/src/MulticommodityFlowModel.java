@@ -37,6 +37,7 @@ public class MulticommodityFlowModel {
 	private int[] truckCapacity;
 	private int[] truckStartNode;
 	private final int T = 36;
+	private int[][] b;
 
 	private IloCplex cplex;
 	private IloIntVar[][][] X;
@@ -54,8 +55,15 @@ public class MulticommodityFlowModel {
 		int v;
 		int t1, t2;
 	}
+	
+	private class Edge2 {
+		int pointFrom;
+		double length;
+		int setIndex;
+	}
 
 	private ArrayList<ArrayList<Edge>> distance;
+	private ArrayList<ArrayList<Edge2>> distanceReverse;
 
 	public MulticommodityFlowModel() throws IOException {
 		cityIndex = new HashMap<String, Integer>();
@@ -368,11 +376,18 @@ public class MulticommodityFlowModel {
 	public void graphTransfer() {
 		// calculate distance
 		distance = new ArrayList<ArrayList<Edge>>();
+		distanceReverse=new ArrayList<ArrayList<Edge2>>();
 
 		// only record Vst and O
 		for (int i = 0; i < numberOfCities * (T + 2); i++) {
 			ArrayList<Edge> templist = new ArrayList<Edge>();
 			distance.add(templist);
+
+		}
+		
+		for(int i=0;i<numberOfCities*(T+3);i++) {
+			ArrayList<Edge2> templist2 = new ArrayList<Edge2>();
+			distanceReverse.add(templist2);
 		}
 
 		// add AT
@@ -388,6 +403,14 @@ public class MulticommodityFlowModel {
 				edge.t1 = t;
 				edge.t2 = t + 1;
 				distance.get(nodeIndex).add(edge);
+				
+				Edge2 edge2=new Edge2();
+				edge2.pointFrom=nodeIndex;
+				edge2.length=0;
+				edge2.setIndex=2;
+				distanceReverse.get(nodeIndex+1).add(edge2);
+				
+				
 			}
 		}
 
@@ -412,6 +435,12 @@ public class MulticommodityFlowModel {
 						edge.t1 = t - timeLength;
 						edge.t2 = t;
 						distance.get(nodeIndex1).add(edge);
+						
+						Edge2 edge2=new Edge2();
+						edge2.pointFrom=nodeIndex1;
+						edge2.length=edge.length;
+						edge2.setIndex=1;
+						distanceReverse.get(edge.pointTo).add(edge2);
 
 						t++;
 						nodeIndex1++;
@@ -436,6 +465,14 @@ public class MulticommodityFlowModel {
 				edge.t1 = -1;
 				edge.t2 = 0;
 				distance.get(oIndex).add(edge);
+				
+				
+				Edge2 edge2=new Edge2();
+				edge2.pointFrom=oIndex;
+				edge2.length=edge.length;
+				edge2.setIndex=3;
+				distanceReverse.get(edge.pointTo).add(edge2);
+
 			}
 		}
 
@@ -453,8 +490,26 @@ public class MulticommodityFlowModel {
 				edge.t1 = T;
 				edge.t2 = -1;
 				distance.get(nodeIndex).add(edge);
+				
+				Edge2 edge2=new Edge2();
+				edge2.pointFrom=nodeIndex;
+				edge2.length=edge.length;
+				edge2.setIndex=4;
+				distanceReverse.get(edge.pointTo).add(edge2);
 			}
 		}
+		
+		// set b
+		b=new int[numberOfCities*(T+1)][numberOfDemandPair];
+		for(int p=0;p<numberOfDemandPair;p++) {
+			demandPair pair=demandPairs.get(p);
+			b[pair.s*(T+1)][p]=pair.demandQuantity;
+			b[pair.t*(T+1)+T][p]=-pair.demandQuantity;
+		}
+		
+//		for(int i=0;i<b.length;i++) {
+//			System.out.println(Arrays.toString(b[i]));
+//		}
 
 		// for(int i=0;i<numberOfCities;i++) {
 		// System.out.println(Arrays.toString(length[i]));
@@ -535,6 +590,160 @@ public class MulticommodityFlowModel {
 
 			cplex.addMinimize(obj);
 //			System.out.println(cplex.getObjective().toString());
+			
+			// ---constraint 1-7---//
+			for(int k=0;k<numberOfTrucks;k++) {
+				
+				// ---constraint 1---//
+				for(int node=0;node<numberOfCities*(T+1);node++) {
+					
+					IloLinearNumExpr constraint1 = cplex.linearNumExpr();
+					for(Edge e:distance.get(node)) {
+						constraint1.addTerm(1, X[node][e.pointTo][k]);
+					}
+					
+					for(Edge2 e:distanceReverse.get(node)) {
+						constraint1.addTerm(-1, X[e.pointFrom][node][k]);
+					}
+					
+//					System.out.println(constraint1.toString());
+					
+					cplex.addEq(0, constraint1);
+				}
+				
+				
+				// ---constraint 2---//
+				IloLinearNumExpr constraint2 = cplex.linearNumExpr();
+				int ok=numberOfCities*(T+1)+truckStartNode[k];
+				for(Edge e:distance.get(ok)) {
+					constraint2.addTerm(1, X[ok][e.pointTo][k]);
+				}
+//				System.out.println(constraint2.toString());
+				cplex.addGe(1, constraint2);
+				
+				// ---constraint 3---//
+				IloLinearNumExpr constraint3 = cplex.linearNumExpr();
+				ok=numberOfCities*(T+1)+truckStartNode[k];
+				for(int o=numberOfCities*(T+1);o<numberOfCities*(T+2);o++) {
+					if(o!=ok) {
+						for(Edge e:distance.get(o)) {
+							constraint3.addTerm(1, X[o][e.pointTo][k]);
+						}
+					}
+				}
+//				System.out.println(constraint3.toString());
+				cplex.addEq(0, constraint3);
+				
+				
+//				// ---constraint 4---//
+//				IloLinearNumExpr constraint4 = cplex.linearNumExpr();
+//				int dk=numberOfCities*(T+2)+truckStartNode[k];
+//				for(Edge2 e:distanceReverse.get(dk)) {
+//					constraint4.addTerm(1, X[e.pointFrom][dk][k]);
+//				}
+//				cplex.addGe(1, constraint4);
+				
+				// ---constraint 5---//
+				IloLinearNumExpr constraint5 = cplex.linearNumExpr();
+				int dk=numberOfCities*(T+2)+truckStartNode[k];
+				for(int d=numberOfCities*(T+2);d<numberOfCities*(T+3);d++) {
+					if(d!=dk) {
+						for(Edge2 e:distanceReverse.get(d)) {
+							constraint5.addTerm(1, X[e.pointFrom][d][k]);
+						}
+					}
+				}
+//				System.out.println(constraint5);
+				cplex.addEq(0, constraint5);
+				
+				
+				// ---constraint 6---//
+				IloLinearNumExpr constraint6 = cplex.linearNumExpr();
+				for(int node=0;node<distance.size();node++) {
+					for(Edge e:distance.get(node)) {
+						if(e.setIndex==1) {
+							constraint6.addTerm(1, X[node][e.pointTo][k]);
+						}
+
+					}
+				}
+				
+//				System.out.println(constraint6);
+				cplex.addGe(legLimit, constraint6);
+				
+				
+				// ---constraint 7---//
+				IloLinearNumExpr constraint7 = cplex.linearNumExpr();
+				for(int node=0;node<distance.size();node++) {
+					for(Edge e:distance.get(node)) {
+							constraint7.addTerm(e.length, X[node][e.pointTo][k]);
+					}
+				}
+				
+//				System.out.println(constraint7);
+				cplex.addGe(distanceLimit, constraint7);
+				
+			}
+			
+			// ---constraint 8---//
+			for(int p=0;p<numberOfDemandPair;p++) {
+				for(int i=0;i<numberOfCities*(T+1);i++) {
+					IloLinearNumExpr constraint8 = cplex.linearNumExpr();
+					for(Edge e:distance.get(i)) {
+						if(e.pointTo<numberOfCities*(T+2)) {
+							constraint8.addTerm(1, y[i][e.pointTo][p]);
+						}
+					}
+					
+					for(Edge2 e:distanceReverse.get(i)) {
+						if(e.pointFrom<numberOfCities*(T+1)) {
+							constraint8.addTerm(-1, y[e.pointFrom][i][p]);
+						}
+					}
+					
+//					System.out.println(constraint8);
+					cplex.addEq(b[i][p], constraint8);
+				}
+			}
+			
+			
+			// ---constraint 9---//
+			for(int i=0;i<distance.size();i++) {
+				for(Edge e:distance.get(i)) {
+					if(e.setIndex==1) {
+						IloLinearNumExpr constraint9 = cplex.linearNumExpr();
+						for(int p=0;p<numberOfDemandPair;p++) {
+							constraint9.addTerm(1, y[i][e.pointTo][p]);
+						}
+						
+						for(int k=0;k<numberOfTrucks;k++) {
+							constraint9.addTerm(-truckCapacity[k], X[i][e.pointTo][k]);
+						}
+						
+//						System.out.println(constraint9);
+						cplex.addGe(0, constraint9);
+					}
+				}
+			}
+			
+			
+//			cplex.setParam(IloCplex.Param.RootAlgorithm, IloCplex.Algorithm.Primal);
+			cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
+			cplex.setParam(IloCplex.IntParam.NodeFileInd, 2);
+			cplex.setParam(IloCplex.IntParam.Threads, 1);
+//			cplex.setParam(IloCplex.DoubleParam.EpGap, 0.06);
+//			cplex.setParam(IloCplex.IntParam.MIPEmphasis, 3);
+//			cplex.setParam(IloCplex.IntParam.pruning, 1);
+			// formulation1.setParam(IloCplex.Param.MIP.Strategy.File,3); // not
+			// needed when Emphasis.Memory==true
+			// cplex.setParam(IloCplex.Param.Emphasis.MIP, 3);
+			cplex.setParam(IloCplex.Param.WorkMem, 1024);
+
+			cplex.solve();
+
+			// System.out.println(cplex.solve());
+			cplex.exportModel("Model_2.lp");
+			
 			
 			
 
