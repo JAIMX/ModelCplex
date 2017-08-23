@@ -1,11 +1,9 @@
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
-
+import ilog.concert.*;
+import ilog.cplex.IloCplex;
 
 public class MulticommodityFlowModel {
 
@@ -38,23 +36,27 @@ public class MulticommodityFlowModel {
 	private double drivingTimePerDay;
 	private int[] truckCapacity;
 	private int[] truckStartNode;
-	private final int T=72;
-	
-	private class Edge{
+	private final int T = 36;
+
+	private IloCplex cplex;
+	private IloIntVar[][][] X;
+	private IloNumVar[][][] y;
+
+	private class Edge {
 		int pointTo;
 		double length;
 		int setIndex;
-		//hat A=1
-		//AT=2
-		//AO=3
-		//AD=4
+		// hat A=1
+		// AT=2
+		// AO=3
+		// AD=4
 		int u;
 		int v;
-		int t1,t2;
+		int t1, t2;
 	}
-	
+
 	private ArrayList<ArrayList<Edge>> distance;
-	
+
 	public MulticommodityFlowModel() throws IOException {
 		cityIndex = new HashMap<String, Integer>();
 		truckIndex = new HashMap<String, Integer>();
@@ -87,7 +89,7 @@ public class MulticommodityFlowModel {
 		temp = in.nextLine();
 		assert (temp.substring(0, 5) == "demand") : "Wrong demandQuantity";
 		temp = in.nextLine();
-		
+
 		while (!temp.equals("}")) {
 			demandPair pair = new demandPair();
 
@@ -114,7 +116,6 @@ public class MulticommodityFlowModel {
 
 		numberOfDemandPair = demandPairs.size();
 
-		
 		temp = in.nextLine();
 		assert (temp.substring(0, 4) == "coord") : "Wrong coordinate";
 		// ---read "coordinate"---//
@@ -137,9 +138,9 @@ public class MulticommodityFlowModel {
 
 			temp = in.nextLine();
 		}
-		
-		length=new double[numberOfCities][numberOfCities];
-		
+
+		length = new double[numberOfCities][numberOfCities];
+
 		// Calculate distance
 		for (int i = 0; i < numberOfCities; i++) {
 			for (int j = i; j < numberOfCities; j++) {
@@ -151,8 +152,7 @@ public class MulticommodityFlowModel {
 				}
 			}
 		}
-		
-		
+
 		temp = in.nextLine();
 		assert (temp.substring(0, 3) == "open") : "Wrong openTime";
 		openTime = new double[numberOfCities];
@@ -360,59 +360,59 @@ public class MulticommodityFlowModel {
 
 	}
 
-/**
- * Vst index:00,01,...,0T;n-1 0,n-1 1,...,n-1 T  [0,n(T+1)-1]
- * O index:n0,n1,...,n(n-1)  [n(T+1),n(T+2)-1]
- * D index:n+1 0,n+1 1,...,n+1(n-1) [n(T+2), n(T+3)-1]
- */
+	/**
+	 * Vst index:00,01,...,0T;n-1 0,n-1 1,...,n-1 T [0,n(T+1)-1] O
+	 * index:n0,n1,...,n(n-1) [n(T+1),n(T+2)-1] D index:n+1 0,n+1 1,...,n+1(n-1)
+	 * [n(T+2), n(T+3)-1]
+	 */
 	public void graphTransfer() {
 		// calculate distance
-		distance=new ArrayList<ArrayList<Edge>>();
-		
+		distance = new ArrayList<ArrayList<Edge>>();
+
 		// only record Vst and O
-		for(int i=0;i<numberOfCities*(T+2);i++) {
-			ArrayList<Edge> templist=new ArrayList<Edge>();
+		for (int i = 0; i < numberOfCities * (T + 2); i++) {
+			ArrayList<Edge> templist = new ArrayList<Edge>();
 			distance.add(templist);
 		}
-		
-		//add AT
-		for(int node=0;node<numberOfCities;node++) {
-			for(int t=0;t<T;t++) {
-				Edge edge=new Edge();
-				int nodeIndex=node*(T+1)+t;
-				edge.pointTo=nodeIndex+1;
-				edge.length=0;
-				edge.setIndex=2;
-				edge.u=node;
-				edge.v=node;
-				edge.t1=t;
-				edge.t2=t+1;
+
+		// add AT
+		for (int node = 0; node < numberOfCities; node++) {
+			for (int t = 0; t < T; t++) {
+				Edge edge = new Edge();
+				int nodeIndex = node * (T + 1) + t;
+				edge.pointTo = nodeIndex + 1;
+				edge.length = 0;
+				edge.setIndex = 2;
+				edge.u = node;
+				edge.v = node;
+				edge.t1 = t;
+				edge.t2 = t + 1;
 				distance.get(nodeIndex).add(edge);
 			}
 		}
-		
-		//add hat A
-		for(int i=0;i<numberOfCities;i++) {
-			for(int j=0;j<numberOfCities;j++) {
-				if(i!=j) {
-					double time=length[i][j]/averageSpeed;
-					int timeLength=(int) Math.ceil(time);
-					
-					int t=timeLength;
-					int nodeIndex1=i*(T+1);
-					int nodeIndex2=j*(T+1)+timeLength;
-					
-					while(t<=T) {
-						Edge edge=new  Edge();
-						edge.pointTo=nodeIndex2;
-						edge.length=length[i][j];
-						edge.setIndex=1;
-						edge.u=i;
-						edge.v=j;
-						edge.t1=t-timeLength;
-						edge.t2=t;
+
+		// add hat A
+		for (int i = 0; i < numberOfCities; i++) {
+			for (int j = 0; j < numberOfCities; j++) {
+				if (i != j) {
+					double time = length[i][j] / averageSpeed;
+					int timeLength = (int) Math.ceil(time);
+
+					int t = timeLength;
+					int nodeIndex1 = i * (T + 1);
+					int nodeIndex2 = j * (T + 1) + timeLength;
+
+					while (t <= T) {
+						Edge edge = new Edge();
+						edge.pointTo = nodeIndex2;
+						edge.length = length[i][j];
+						edge.setIndex = 1;
+						edge.u = i;
+						edge.v = j;
+						edge.t1 = t - timeLength;
+						edge.t2 = t;
 						distance.get(nodeIndex1).add(edge);
-						
+
 						t++;
 						nodeIndex1++;
 						nodeIndex2++;
@@ -420,56 +420,135 @@ public class MulticommodityFlowModel {
 				}
 			}
 		}
-		
-		//add AO:(Ok,n0)
-		for(int o=0;o<numberOfCities;o++) {
-			int oIndex=numberOfCities*(T+1)+o;
-			
-			for(int node=0;node<numberOfCities;node++) {
-				int nodeIndex=node*(T+1);
-				Edge edge=new Edge();
-				edge.pointTo=nodeIndex;
-				edge.length=length[o][node];
-				edge.setIndex=3;
-				edge.u=o;
-				edge.v=node;
-				edge.t1=-1;
-				edge.t2=0;
+
+		// add AO:(Ok,n0)
+		for (int o = 0; o < numberOfCities; o++) {
+			int oIndex = numberOfCities * (T + 1) + o;
+
+			for (int node = 0; node < numberOfCities; node++) {
+				int nodeIndex = node * (T + 1);
+				Edge edge = new Edge();
+				edge.pointTo = nodeIndex;
+				edge.length = length[o][node];
+				edge.setIndex = 3;
+				edge.u = o;
+				edge.v = node;
+				edge.t1 = -1;
+				edge.t2 = 0;
 				distance.get(oIndex).add(edge);
 			}
 		}
-		
-		//add AD:(nT,Dk)
-		for(int node=0;node<numberOfCities;node++) {
-			int nodeIndex=node*(T+1)+T;
-			for(int d=0;d<numberOfCities;d++) {
-				int dIndex=numberOfCities*(T+2)+d;
-				Edge edge=new Edge();
-				edge.pointTo=dIndex;
-				edge.length=length[node][d];
-				edge.setIndex=4;
-				edge.u=node;
-				edge.v=d;
-				edge.t1=T;
-				edge.t2=-1;
+
+		// add AD:(nT,Dk)
+		for (int node = 0; node < numberOfCities; node++) {
+			int nodeIndex = node * (T + 1) + T;
+			for (int d = 0; d < numberOfCities; d++) {
+				int dIndex = numberOfCities * (T + 2) + d;
+				Edge edge = new Edge();
+				edge.pointTo = dIndex;
+				edge.length = length[node][d];
+				edge.setIndex = 4;
+				edge.u = node;
+				edge.v = d;
+				edge.t1 = T;
+				edge.t2 = -1;
 				distance.get(nodeIndex).add(edge);
 			}
 		}
-		
-//		for(int i=0;i<numberOfCities;i++) {
-//			System.out.println(Arrays.toString(length[i]));
-//		}
-//		for(int index=0;index<distance.size();index++) {
-//			for(Edge e:distance.get(index)) {
-//				System.out.println(e.u+","+e.t1+"->"+e.v+","+e.t2+": "+e.length+" "+e.setIndex);
-//			}
-//			System.out.println();
-//		}
+
+		// for(int i=0;i<numberOfCities;i++) {
+		// System.out.println(Arrays.toString(length[i]));
+		// }
+		// for(int index=0;index<distance.size();index++) {
+		// for(Edge e:distance.get(index)) {
+		// System.out.println(e.u+","+e.t1+"->"+e.v+","+e.t2+": "+e.length+"
+		// "+e.setIndex);
+		// }
+		// System.out.println();
+		// }
 	}
-	
+
+	public void ModelBuilding() {
+		try {
+			cplex = new IloCplex();
+
+			// ---decision variables---//
+			int totalNumNode = numberOfCities * (T + 3);
+			int numOfVst = numberOfCities * (T + 1);
+			X = new IloIntVar[totalNumNode][totalNumNode][numberOfTrucks];
+			y = new IloNumVar[numOfVst][numOfVst][numberOfDemandPair];
+
+			for (int i = 0; i < totalNumNode; i++) {
+				for (int j = 0; j < totalNumNode; j++) {
+					for (int k = 0; k < numberOfTrucks; k++) {
+						if (i != j) {
+							X[i][j][k] = cplex.intVar(0, 1, "X" + i + "," + j + "," + k);
+						} else {
+							X[i][j][k] = cplex.intVar(0, 0, "X" + i + "," + j + "," + k);
+						}
+					}
+				}
+			}
+
+			for (int i = 0; i < numOfVst; i++) {
+				for (int j = 0; j < numOfVst; j++) {
+					for (int p = 0; p < numberOfDemandPair; p++) {
+
+						int s = demandPairs.get(p).s;
+						int t = demandPairs.get(p).t;
+
+						if (i != j) {
+							y[i][j][p] = cplex.numVar(0, Double.MAX_VALUE, "y" + i + "," + j + "," + s + "," + t);
+						} else {
+							y[i][j][p] = cplex.numVar(0, 0, "y" + i + "," + j + "," + s + "," + t);
+						}
+						
+					}
+				}
+			}
+			
+			
+			// ---Objective---//
+			IloLinearNumExpr obj = cplex.linearNumExpr();
+
+			double parameter = fixedCost / (averageSpeed * drivingTimePerDay);
+			
+			for(int i=0;i<numberOfCities*(T+2);i++) {
+				for(Edge e:distance.get(i)) {
+					for(int k=0;k<numberOfTrucks;k++) {
+						obj.addTerm(parameter*e.length,X[i][e.pointTo][k]);
+					}
+					
+				}
+			}
+			
+			for(int i=0;i<numberOfCities*(T+1);i++) {
+				for(Edge e:distance.get(i)) {
+					if(e.pointTo<numberOfCities*(T+1)) {
+						for (int p = 0; p < numberOfDemandPair; p++) {
+							obj.addTerm(transportationCost * e.length, y[i][e.pointTo][p]);
+						}
+					}
+
+				}
+			}
+
+			cplex.addMinimize(obj);
+//			System.out.println(cplex.getObjective().toString());
+			
+			
+
+		} catch (IloException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
 	public static void main(String[] args) throws IOException {
-		MulticommodityFlowModel test=new MulticommodityFlowModel();
+		MulticommodityFlowModel test = new MulticommodityFlowModel();
 		test.readData("out2.txt");
 		test.graphTransfer();
+		test.ModelBuilding();
 	}
 }
