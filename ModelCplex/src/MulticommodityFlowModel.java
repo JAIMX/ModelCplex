@@ -756,7 +756,7 @@ public class MulticommodityFlowModel {
             cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
             cplex.setParam(IloCplex.IntParam.NodeFileInd, 2);
             cplex.setParam(IloCplex.IntParam.Threads, 1);
-            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.04);
+//            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.04);
             // cplex.setParam(IloCplex.IntParam.MIPEmphasis, 3);
             // cplex.setParam(IloCplex.IntParam.pruning, 1);
             // formulation1.setParam(IloCplex.Param.MIP.Strategy.File,3); // not
