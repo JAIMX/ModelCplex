@@ -689,7 +689,7 @@ public class Data {
     
     
     
-    //check
+ 
     public double[] generateInitialx() {
     	double[] initialx=new double[numOfx];
     	
@@ -717,13 +717,21 @@ public class Data {
     		
     		
     		for(int edgeIndex:distance.get(currentNode)) {
-    			if(edgeSet.get(edgeIndex).setIndex==4) {
+    			if(edgeSet.get(edgeIndex).end==endNode) {
     				initialx[k*edgeSet.size()+edgeIndex]=1;
 					break;
     			}
     		}
     		
     	}
+    	
+    	
+//    	System.out.println("for truck #1: ");
+//    	for(int e=0;e<edgeSet.size();e++) {
+//    		if(initialx[1*edgeSet.size()+e]==1) {
+//    			System.out.println(edgeSet.get(e).start+"->"+edgeSet.get(e).end+"->");
+//    		}
+//    	}
     	
     	return initialx;
     }
@@ -755,5 +763,6 @@ public class Data {
 		data.readData("out2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
+		data.generateInitialx();
 	}
 }
