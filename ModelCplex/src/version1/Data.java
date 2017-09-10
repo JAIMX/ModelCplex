@@ -60,6 +60,7 @@ public class Data {
     private ArrayList<ArrayList<Integer>> distance;
     private ArrayList<ArrayList<Integer>> distanceReverse;
     private int numOfEdge1,numOfEdge2,numOfEdge3,numOfEdge4;
+    private int numOfEdge12,numOfy,numOfx;
     
     
     private double[] c,f,bb;
@@ -516,9 +517,9 @@ public class Data {
     }
 	
     public void matrixGenerator() {
-    	int numOfEdge12=numOfEdge1+numOfEdge2;
-    	int numOfy=(numOfEdge12)*numberOfDemandPair;
-    	int numOfx=edgeSet.size()*numberOfTrucks;
+    	numOfEdge12=numOfEdge1+numOfEdge2;
+    	numOfy=(numOfEdge12)*numberOfDemandPair;
+    	numOfx=edgeSet.size()*numberOfTrucks;
     	
     	
     	c=new double[numOfy];
@@ -684,15 +685,72 @@ public class Data {
     		row++;
     	}
     	
-
-    	
-    	
-    	
-    	
-    	
-    	
     }
-	public static void main(String[] args) throws IOException {
+    
+    
+    
+    //check
+    public double[] generateInitialx() {
+    	double[] initialx=new double[numOfx];
+    	
+    	for(int k=0;k<numberOfTrucks;k++) {
+    		int startNode=numberOfCities*(T+1)+truckStartNode[k];
+    		int endNode=startNode+numberOfCities;
+    		
+    		for(int edgeIndex:distance.get(startNode)) {
+    			if(edgeSet.get(edgeIndex).end==truckStartNode[k]*(T+1)) {
+    				initialx[k*edgeSet.size()+edgeIndex]=1;
+    				break;
+    			}
+    		}
+    		
+    		int currentNode=truckStartNode[k]*(T+1);
+    		for(int t=0;t<T;t++) {
+    			for(int edgeIndex:distance.get(currentNode)) {
+    				if(edgeSet.get(edgeIndex).setIndex==2) {
+    					initialx[k*edgeSet.size()+edgeIndex]=1;
+    					break;
+    				}
+    			}
+    			currentNode++;
+    		}
+    		
+    		
+    		for(int edgeIndex:distance.get(currentNode)) {
+    			if(edgeSet.get(edgeIndex).setIndex==4) {
+    				initialx[k*edgeSet.size()+edgeIndex]=1;
+					break;
+    			}
+    		}
+    		
+    	}
+    	
+    	return initialx;
+    }
+
+    public double[] getc() {
+    	return c;
+    }
+    public double[] getf() {
+    	return f;
+    }
+    public double[] getbb() {
+    	return bb;
+    }
+    public double[][] getA(){
+    	return A;
+    }
+    public double[][] getB(){
+    	return B;
+    }
+    public int getNumOfx() {
+    	return numOfx;
+    }
+    public int getNumOfy() {
+    	return numOfy;
+    }
+
+    public static void main(String[] args) throws IOException {
 		Data data=new Data();
 		data.readData("out2.txt");
 		data.graphTransfer();
