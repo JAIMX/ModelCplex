@@ -685,6 +685,15 @@ public class Data {
     		row++;
     	}
     	
+    	
+    	System.out.println("The number of x= "+numOfx);
+    	System.out.println("The number of y= "+numOfy);
+    	System.out.println("The number of trucks= "+numberOfTrucks);
+    	System.out.println("The number of demand= "+numberOfDemandPair);
+    	System.out.println("The number of edges= "+edgeSet.size());
+    	System.out.println("The number of constraints= "+A.length);
+    	
+    	
     }
     
     
