@@ -786,6 +786,9 @@ public class Data {
 	public int getNumOfy() {
 		return numOfy;
 	}
+	public int getNumOfTruck() {
+		return numberOfTrucks;
+	}
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();
