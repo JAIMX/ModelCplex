@@ -7,6 +7,7 @@ import java.util.*;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.Param.Preprocessing;
+import version1.Data.Edge;
 
 public class Bender {
 
@@ -39,6 +40,7 @@ public class Bender {
 	// for BMP
 	private ArrayList<double[]> feasibleCut, optimalCut;
 	// private int numOfFeasibleCut,numOfOptimalCut;
+	private ArrayList<Edge> edgeSet;
 
 	public Bender(Data data, double tolerance) {
 		// TODO Auto-generated constructor stub
@@ -54,6 +56,7 @@ public class Bender {
 		this.tolerance = tolerance;
 		optY = new double[numOfY];
 		numOfTruck = data.getNumOfTruck();
+		this.edgeSet = data.getEdgeSet();
 
 	}
 
@@ -345,10 +348,6 @@ public class Bender {
 		// System.out.println(optimalCut.size());
 
 	}
-	
-	private class Node{
-		
-	}
 
 	public void BMP() throws IloException {
 		// Initialize BMP model
@@ -359,7 +358,8 @@ public class Bender {
 		IloRange[] truckConstraint = new IloRange[numOfTruck];
 		// artificial variable
 		IloNumVar[] z = new IloNumVar[numOfTruck + 2];
-		Stack<Node> stack=new Stack<Node>();
+		ArrayList<Path> pathSet = new ArrayList<Path>();
+		;
 
 		// optimal cut
 		for (int i = 0; i < optimalCut.size(); i++) {
@@ -393,12 +393,118 @@ public class Bender {
 		// z2-zk+1
 		for (int index = 2; index <= numOfTruck + 1; index++) {
 			tempColumn = BMP.column(obj, Double.MAX_VALUE / 10000);
-			tempColumn = tempColumn.and(BMP.column(truckConstraint[index-2], 1));
+			tempColumn = tempColumn.and(BMP.column(truckConstraint[index - 2], 1));
 			z[index] = BMP.numVar(tempColumn, 0, Double.MAX_VALUE);
 		}
-		
-		
 
+		// start branch and price
+		Stack<Node> stack = new Stack<Node>();
+		// record the branch information
+		ArrayList<HashSet<Integer>> Cover, notCover;
+		Cover = new ArrayList<HashSet<Integer>>();
+		notCover = new ArrayList<HashSet<Integer>>();
+
+		for (int k = 0; k < numOfTruck; k++) {
+			HashSet<Integer> temp = new HashSet<Integer>();
+			Cover.add(temp);
+			temp = new HashSet<Integer>();
+			notCover.add(temp);
+		}
+
+		// root node
+		Node root = new Node();
+		root.extractCol = new HashSet<IloNumVar>();
+		root.addCol = new HashSet<IloNumVar>();
+		root.branchTruck = -1;
+		root.ifAddCol = false;
+		stack.add(root);
+
+		// start DFS
+		while (stack.size() > 0) {
+			Node currentNode = stack.peek();
+
+			if (currentNode.ifAddCol == false) { // we don't extract the node
+
+				if (currentNode.branchTruck >= 0) {
+					// delete some path in the current model firstly
+					if (currentNode.ifCover == true) {
+						Cover.get(currentNode.branchTruck).add(currentNode.branchEdge);
+					} else {
+						notCover.get(currentNode.branchTruck).add(currentNode.branchEdge);
+					}
+
+					// extract column
+					if (currentNode.ifCover == true) { // Xak=1
+						for (int i = 0; i < pathSet.size(); i++) {
+							Path currentPath = pathSet.get(i);
+
+							if (currentPath.ifInModel == true && currentPath.truckIndex == currentNode.branchTruck) {
+								for (int edgeIndex : currentPath.edgeIndexSet) {
+									if (edgeIndex != currentNode.branchEdge) {
+										int start = edgeSet.get(currentNode.branchEdge).start;
+										int end = edgeSet.get(currentNode.branchEdge).end;
+
+										if (edgeSet.get(edgeIndex).start == start
+												|| edgeSet.get(edgeIndex).end == end) {
+											// extract currentPath in the model, and record on
+											// currentNode.extractCol,change currentPath.ifinmodel
+											currentNode.extractCol.add(currentPath.column);
+											BMP.remove(currentPath.column);
+											currentPath.ifInModel = false;
+											break;
+										}
+									}
+								}
+							}
+						}
+					} else { // Xak=0
+
+						for (int i = 0; i < pathSet.size(); i++) {
+							Path currentPath = pathSet.get(i);
+
+							if (currentPath.ifInModel == true && currentPath.truckIndex == currentNode.branchTruck) {
+								for (int edgeIndex : currentPath.edgeIndexSet) {
+									if (edgeIndex == currentNode.branchEdge) {
+										// extract currentPath in the model, and record on currentNode.extractCol,change currentPath.ifinmodel
+										currentNode.extractCol.add(currentPath.column);
+										BMP.remove(currentPath.column);
+										currentPath.ifInModel = false;
+										break;
+									}
+								}
+							}
+						}
+
+					}
+				}
+				
+				
+				// add new column(subproblem,according to cover and not cover)
+				int count=0;
+				while(count<100) {
+					
+				}
+				
+				
+				
+			}
+		}
+
+	}
+
+	private class Path {
+		IloNumVar column;
+		HashSet<Integer> edgeIndexSet;
+		int truckIndex;
+
+		boolean ifInModel;
+	}
+
+	private class Node {
+		HashSet<IloNumVar> extractCol, addCol;
+		int branchTruck, branchEdge;
+		boolean ifCover;
+		boolean ifAddCol;
 	}
 
 	public static void main(String[] args) throws IOException, IloException {
