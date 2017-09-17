@@ -41,7 +41,7 @@ public class Data {
 	static double e = Math.pow(10, -2);
 	private boolean[][] connect;
 
-	private class Edge {
+	public class Edge {
 		int start, end;
 		double length;
 		int setIndex;
@@ -788,6 +788,10 @@ public class Data {
 	}
 	public int getNumOfTruck() {
 		return numberOfTrucks;
+	}
+	
+	public ArrayList<Edge> getEdgeSet(){
+		return edgeSet;
 	}
 
 	public static void main(String[] args) throws IOException {
