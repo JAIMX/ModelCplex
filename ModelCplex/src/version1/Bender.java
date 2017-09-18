@@ -20,7 +20,7 @@ public class Bender {
 	private double UB, LB;
 	private double[] c, f, b;
 	private double[][] A, B;
-	private int numOfX, numOfY, numOfConstraint, numOfTruck,numOfCity;
+	private int numOfX, numOfY, numOfConstraint, numOfTruck,numOfCity,numOfedge;
 	private double[] currentY;
 	private double[] b_By;
 	private double fy;
@@ -42,6 +42,9 @@ public class Bender {
 	// private int numOfFeasibleCut,numOfOptimalCut;
 	private ArrayList<Edge> edgeSet;
 	private final int T;
+	private ArrayList<ArrayList<Integer>> distance;
+	private ArrayList<ArrayList<Integer>> distanceReverse;
+	private int[] truckStartNode;
 
 	public Bender(Data data, double tolerance) {
 		// TODO Auto-generated constructor stub
@@ -60,6 +63,10 @@ public class Bender {
 		this.edgeSet = data.getEdgeSet();
 		T=data.getT();
 		numOfCity=data.getNumOfCity();
+		distance=data.getDistance();
+		distanceReverse=data.getDistanceReverse();
+		numOfedge=edgeSet.size();
+		truckStartNode=data.getTruckStartNode();
 	}
 
 	public void initailizeModel() throws IloException {
@@ -368,6 +375,7 @@ public class Bender {
 			optConstraint[i] = BMP.addRange(optimalCut.get(i)[numOfY], Double.MAX_VALUE);
 		}
 
+
 		// feasible cut
 		for (int i = 0; i < feasibleCut.size(); i++) {
 			feaConstraint[i] = BMP.addRange(feasibleCut.get(i)[numOfY], Double.MAX_VALUE);
@@ -383,7 +391,16 @@ public class Bender {
 		for (int i = 0; i < optimalCut.size(); i++) {
 			tempColumn = tempColumn.and(BMP.column(optConstraint[i], 1));
 		}
-		z[0] = BMP.numVar(tempColumn, 0, Double.MAX_VALUE);
+
+		/**
+		 * Here is a special  condition, when there is no optimal cut in BMP, we set z0=0 to get dual variables.
+		 */
+		if(optimalCut.size()==0) {
+			IloRange tempConstraint = BMP.addRange(0, 0);
+			tempColumn=tempColumn.and(BMP.column(tempConstraint,1));
+		}	
+		z[0] = BMP.numVar(tempColumn, Double.MIN_VALUE, Double.MAX_VALUE);
+		
 
 		// z1
 		tempColumn = BMP.column(obj, Double.MAX_VALUE / 10000);
@@ -501,11 +518,70 @@ public class Bender {
 				
 				
 				
-		         /// SHORTEST PATH PROBLEM ///
 				// add new column(subproblem,according to cover and not cover;find a new class Path)
 				int count=0;
 				boolean stopReason=false;
 				while(count<100) {
+					BMP.solve();
+					
+					/// FIND AND ADD A NEW SHORTEST PATH///
+					double[] optPrice=BMP.getDuals(optConstraint);
+					double[] feaPrice=BMP.getDuals(feaConstraint);
+					double[] truckPrice=BMP.getDuals(truckConstraint);
+					
+					// if all of k trucks don't have negative reduced cost, then check=false
+					boolean check=false;
+					for(int k=0;k<numOfTruck;k++) {
+						
+						double[] dpFunction=new double[numOfTruck*(T+1)];
+						int[] pathRecord=new int[numOfTruck*(T+1)];
+						for(int i=0;i<dpFunction.length;i++) {
+							dpFunction[i]=Double.MAX_VALUE;
+						}
+						
+						int startNode=numOfTruck*(T+1)+truckStartNode[k];
+						//original node
+						if(cover[k][T+1]>0) {
+							int edgeIndex=cover[k][T+1];
+							int pointTo=edgeSet.get(edgeIndex).end;
+							pathRecord[pointTo]=edgeSet.get(edgeIndex).start;
+							//calculate cost
+							int columnIndex=numOfedge*k+edgeIndex;
+							double cost=0;
+							
+							for(int i=0;i<optimalCut.size();i++) {
+								cost+=optPrice[i]*optimalCut.get(i)[columnIndex];
+							}
+							for(int i=0;i<feasibleCut.size();i++) {
+								cost+=feaPrice[i]*feasibleCut.get(i)[columnIndex];
+							}
+							cost=-cost;
+							dpFunction[pointTo]=cost;
+						}else { // no restriction
+							for(int edgeIndex:distance.get(startNode)) {
+								if(!notCover.get(k).contains(edgeIndex)) {
+									//calculate cost
+									int columnIndex=numOfedge*k+edgeIndex;
+									double cost=0;
+									
+									for(int i=0;i<optimalCut.size();i++) {
+										cost+=optPrice[i]*optimalCut.get(i)[columnIndex];
+									}
+									for(int i=0;i<feasibleCut.size();i++) {
+										cost+=feaPrice[i]*feasibleCut.get(i)[columnIndex];
+									}
+									cost=-cost;
+									
+									int pointTo=edgeSet.get(edgeIndex).end;
+									if(cost<dpFunction[pointTo]) {
+										dpFunction[pointTo]=cost;
+										pathRecord[pointTo]=startNode;
+									}
+								}
+							}
+						}
+					}
+					
 					
 				}
 				
