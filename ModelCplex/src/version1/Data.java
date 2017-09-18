@@ -793,6 +793,12 @@ public class Data {
 	public ArrayList<Edge> getEdgeSet(){
 		return edgeSet;
 	}
+	public int getT() {
+		return T;
+	}
+	public int getNumOfCity() {
+		return numberOfCities;
+	}
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();

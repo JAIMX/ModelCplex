@@ -20,7 +20,7 @@ public class Bender {
 	private double UB, LB;
 	private double[] c, f, b;
 	private double[][] A, B;
-	private int numOfX, numOfY, numOfConstraint, numOfTruck;
+	private int numOfX, numOfY, numOfConstraint, numOfTruck,numOfCity;
 	private double[] currentY;
 	private double[] b_By;
 	private double fy;
@@ -41,6 +41,7 @@ public class Bender {
 	private ArrayList<double[]> feasibleCut, optimalCut;
 	// private int numOfFeasibleCut,numOfOptimalCut;
 	private ArrayList<Edge> edgeSet;
+	private final int T;
 
 	public Bender(Data data, double tolerance) {
 		// TODO Auto-generated constructor stub
@@ -57,7 +58,8 @@ public class Bender {
 		optY = new double[numOfY];
 		numOfTruck = data.getNumOfTruck();
 		this.edgeSet = data.getEdgeSet();
-
+		T=data.getT();
+		numOfCity=data.getNumOfCity();
 	}
 
 	public void initailizeModel() throws IloException {
@@ -400,15 +402,21 @@ public class Bender {
 		// start branch and price
 		Stack<Node> stack = new Stack<Node>();
 		// record the branch information
-		ArrayList<HashSet<Integer>> Cover, notCover;
-		Cover = new ArrayList<HashSet<Integer>>();
+		ArrayList<HashSet<Integer>> notCover;
+		int[][] cover=new int[numOfTruck][T+2];
+//		Cover = new ArrayList<HashSet<Integer>>();
 		notCover = new ArrayList<HashSet<Integer>>();
 
 		for (int k = 0; k < numOfTruck; k++) {
 			HashSet<Integer> temp = new HashSet<Integer>();
-			Cover.add(temp);
-			temp = new HashSet<Integer>();
+//			Cover.add(temp);
+//			temp = new HashSet<Integer>();
 			notCover.add(temp);
+		}
+		for(int k=0;k<numOfTruck;k++) {
+			for(int t=0;t<T+2;t++) {
+				cover[k][t]=-1;
+			}
 		}
 
 		// root node
@@ -428,7 +436,18 @@ public class Bender {
 				if (currentNode.branchTruck >= 0) {
 					// delete some path in the current model firstly
 					if (currentNode.ifCover == true) {
-						Cover.get(currentNode.branchTruck).add(currentNode.branchEdge);
+//						Cover.get(csurrentNode.branchTruck).add(currentNode.branchEdge);
+						int branchEdgeIndex=currentNode.branchEdge;
+						int startNode=edgeSet.get(branchEdgeIndex).start;
+
+						if(startNode<numOfCity*(T+1)) {
+							int time=startNode%(T+1);
+							cover[currentNode.branchTruck][time]=branchEdgeIndex;
+						}else { //branch edge start from the origin(cover[truck][T+1])
+							cover[currentNode.branchTruck][T+1]=branchEdgeIndex;
+						}
+						
+						
 					} else {
 						notCover.get(currentNode.branchTruck).add(currentNode.branchEdge);
 					}
@@ -478,9 +497,14 @@ public class Bender {
 					}
 				}
 				
+				BMP.setParam(IloCplex.Param.RootAlgorithm, IloCplex.Algorithm.Primal);
 				
-				// add new column(subproblem,according to cover and not cover)
+				
+				
+		         /// SHORTEST PATH PROBLEM ///
+				// add new column(subproblem,according to cover and not cover;find a new class Path)
 				int count=0;
+				boolean stopReason=false;
 				while(count<100) {
 					
 				}
@@ -501,9 +525,11 @@ public class Bender {
 	}
 
 	private class Node {
+		
 		HashSet<IloNumVar> extractCol, addCol;
 		int branchTruck, branchEdge;
 		boolean ifCover;
+		
 		boolean ifAddCol;
 	}
 
