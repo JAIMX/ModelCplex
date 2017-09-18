@@ -34,7 +34,7 @@ public class Data {
 	private double averageSpeed;
 	private double drivingTimePerDay;
 	private int[] truckCapacity;
-	private int[] truckStartNode;
+    private int[] truckStartNode;
 
 	private final int T = 36;
 	private int[][] b;
@@ -57,7 +57,7 @@ public class Data {
 	private ArrayList<Edge> edgeSet;
 	private ArrayList<ArrayList<Integer>> distance;
 	private ArrayList<ArrayList<Integer>> distanceReverse;
-	private int numOfEdge1, numOfEdge2, numOfEdge3, numOfEdge4;
+	private int numOfEdge1, numOfEdge2, numOfEdge3,numOfEdge4;
 	private int numOfEdge12, numOfy, numOfx, numOfconstraint;
 
 	private double[] c, f, bb;
@@ -799,6 +799,17 @@ public class Data {
 	public int getNumOfCity() {
 		return numberOfCities;
 	}
+	public ArrayList<ArrayList<Integer>> getDistance(){
+		return distance;
+	}
+	public ArrayList<ArrayList<Integer>> getDistanceReverse(){
+		return distanceReverse;
+	}
+	public int[] getTruckStartNode() {
+		return truckStartNode;
+	}
+	
+
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();
