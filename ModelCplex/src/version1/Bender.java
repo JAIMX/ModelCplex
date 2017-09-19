@@ -580,6 +580,68 @@ public class Bender {
 								}
 							}
 						}
+						
+						
+						//update t in[0,T]
+						//Initialize
+						int nextCoverTime=-1;
+						int nextStartPoint=-1;
+						for(int time=nextCoverTime+1;time<=T;time++) {
+							if(cover[k][time]>0) {
+								nextCoverTime=time;
+								nextStartPoint=edgeSet.get(cover[k][time]).start;
+								break;
+							}
+						}
+						
+						if(nextStartPoint<0) {
+							nextCoverTime=T+1;
+						}
+						
+						int currentTime=0;
+						//update dpFunction
+						while(currentTime<T) {
+							
+							
+							if(currentTime<nextCoverTime) {
+								for(int node=0;node<numOfCity;node++) {
+									int nodeIndex=node*(T+1)+currentTime;
+									if(dpFunction[nodeIndex]>Double.MAX_VALUE/100000) {
+										for(int edgeIndex:distance.get(nodeIndex)) {
+											Edge edge=edgeSet.get(edgeIndex);
+											if((edge.t2<nextCoverTime||(edge.t2==nextCoverTime&&edge.end==nextStartPoint))&&!notCover.get(k).contains(edgeIndex)) {
+												
+												//calculate cost
+												int columnIndex=numOfedge*k+edgeIndex;
+												double cost=0;
+												
+												for(int i=0;i<optimalCut.size();i++) {
+													cost+=optPrice[i]*optimalCut.get(i)[columnIndex];
+												}
+												for(int i=0;i<feasibleCut.size();i++) {
+													cost+=feaPrice[i]*feasibleCut.get(i)[columnIndex];
+												}
+												cost=-cost;
+												
+												if(dpFunction[edge.end]>cost) {
+													dpFunction[edge.end]=cost;
+													pathRecord[edge.end]=edge.start;
+												}
+												
+											}
+										}
+									}
+								}
+							}
+						}
+						
+						
+						
+						
+						
+						
+						
+						
 					}
 					
 					
