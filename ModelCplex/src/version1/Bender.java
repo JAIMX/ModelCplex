@@ -385,7 +385,8 @@ public class Bender {
 		z[0] = BMP.numVar(tempColumn, Double.MIN_VALUE, Double.MAX_VALUE);
 
 		// z1
-		tempColumn = BMP.column(obj, Double.MAX_VALUE / 10000);
+		// tempColumn = BMP.column(obj, Double.MAX_VALUE / 10000);
+		tempColumn = BMP.column(obj, 100000000);
 		for (int i = 0; i < feasibleCut.size(); i++) {
 			tempColumn = tempColumn.and(BMP.column(feaConstraint[i], 1));
 		}
@@ -393,7 +394,8 @@ public class Bender {
 
 		// z2-zk+1
 		for (int index = 2; index <= numOfTruck + 1; index++) {
-			tempColumn = BMP.column(obj, Double.MAX_VALUE / 10000);
+			// tempColumn = BMP.column(obj, Double.MAX_VALUE / 10000);
+			tempColumn = BMP.column(obj, 100000000);
 			tempColumn = tempColumn.and(BMP.column(truckConstraint[index - 2], 1));
 			z[index] = BMP.numVar(tempColumn, 0, Double.MAX_VALUE);
 		}
@@ -420,20 +422,24 @@ public class Bender {
 
 		// root node
 		Node root = new Node();
-		root.extractCol = new HashSet<IloNumVar>();
-		root.addCol = new HashSet<IloNumVar>();
+		root.extractCol = new HashSet<Path>();
+		root.addCol = new HashSet<Path>();
 		root.branchTruck = -1;
 		root.ifAddCol = false;
 		stack.add(root);
 
 		// start DFS
 		while (stack.size() > 0) {
+			System.out.println("Now stack.size= " + stack.size());
+
 			Node currentNode = stack.peek();
 
 			if (currentNode.ifAddCol == false) { // we don't extract the node
+				System.out.println("We don't extract the current node");
 
 				if (currentNode.branchTruck >= 0) {
 					// delete some path in the current model firstly
+					System.out.println("1-Deal with the branch of current node");
 					if (currentNode.ifCover == true) {
 						// Cover.get(csurrentNode.branchTruck).add(currentNode.branchEdge);
 						int branchEdgeIndex = currentNode.branchEdge;
@@ -450,6 +456,7 @@ public class Bender {
 						notCover.get(currentNode.branchTruck).add(currentNode.branchEdge);
 					}
 
+					System.out.println("2-Extract some column in BMP acoording to the branch");
 					// extract column
 					if (currentNode.ifCover == true) { // Xak=1
 						for (int i = 0; i < pathSet.size(); i++) {
@@ -465,7 +472,7 @@ public class Bender {
 												|| edgeSet.get(edgeIndex).end == end) {
 											// extract currentPath in the model, and record on
 											// currentNode.extractCol,change currentPath.ifinmodel
-											currentNode.extractCol.add(currentPath.column);
+											currentNode.extractCol.add(currentPath);
 											BMP.remove(currentPath.column);
 											currentPath.ifInModel = false;
 											break;
@@ -484,7 +491,7 @@ public class Bender {
 									if (edgeIndex == currentNode.branchEdge) {
 										// extract currentPath in the model, and record on currentNode.extractCol,change
 										// currentPath.ifinmodel
-										currentNode.extractCol.add(currentPath.column);
+										currentNode.extractCol.add(currentPath);
 										BMP.remove(currentPath.column);
 										currentPath.ifInModel = false;
 										break;
@@ -498,238 +505,289 @@ public class Bender {
 
 				BMP.setParam(IloCplex.Param.RootAlgorithm, IloCplex.Algorithm.Primal);
 
+				System.out.println("3-Start to add some path to BMP");
 				// add new column(subproblem,according to cover and not cover;find a new class
 				// Path)
 				int count = 0;
 				boolean check = true;
-				boolean overUB = false;
+				boolean ifAllZero = true;
+//				boolean overUB = false;
 
-				BMP.exportModel("BMP0.lp");
+				// BMP.exportModel("BMP0.lp");
+				
+				
+				
+				
+				
+				
+				
+				///-------------------------------------------------------------------------------------------///
 
-				while (count < 100 && check) {
-					BMP.solve();
-					if (BMP.getObjValue() > UB) {
-						overUB = true;
-						break;
-					}
+				BMP.solve();
+				if (BMP.getObjValue() < UB) {
+					
 					if (BMP.getObjValue() > LB) {
 						LB = BMP.getObjValue();
+						System.out.println("LB update to "+LB);
 					}
+					
+					for (;;) {
 
-					/// FIND AND ADD A NEW SHORTEST PATH///
-					optPrice = BMP.getDuals(optConstraint);
-					feaPrice = BMP.getDuals(feaConstraint);
-					truckPrice = BMP.getDuals(truckConstraint);
+						/// FIND AND ADD A NEW SHORTEST PATH///
+						optPrice = BMP.getDuals(optConstraint);
+						feaPrice = BMP.getDuals(feaConstraint);
+						truckPrice = BMP.getDuals(truckConstraint);
 
-					// if all of k trucks don't have negative reduced cost, then check=false
-					check = false;
-					double totalPathCost = Double.MAX_VALUE;
-					int lastEdgeIndex = -1;
+						// if all of k trucks don't have negative reduced cost, then check=false
+						check = false;
+						double totalPathCost = Double.MAX_VALUE;
+						int lastEdgeIndex = -1;
 
-					for (int k = 0; k < numOfTruck; k++) {
+						for (int k = 0; k < numOfTruck; k++) {
 
-						double[] dpFunction = new double[numOfTruck * (T + 1)];
-						int[] pathRecord = new int[numOfTruck * (T + 1)];
-						for (int i = 0; i < dpFunction.length; i++) {
-							dpFunction[i] = Double.MAX_VALUE;
-						}
+							double[] dpFunction = new double[numOfTruck * (T + 1)];
+							int[] pathRecord = new int[numOfTruck * (T + 1)];
+							for (int i = 0; i < dpFunction.length; i++) {
+								dpFunction[i] = Double.MAX_VALUE;
+							}
 
-						int startNode = numOfCity * (T + 1) + truckStartNode[k];
-						// original node
-						if (cover[k][T + 1] > 0) {
-							int edgeIndex = cover[k][T + 1];
-							int pointTo = edgeSet.get(edgeIndex).end;
-							pathRecord[pointTo] = edgeIndex;
+							int startNode = numOfCity * (T + 1) + truckStartNode[k];
+							// original node
+							if (cover[k][T + 1] > 0) {
+								int edgeIndex = cover[k][T + 1];
+								int pointTo = edgeSet.get(edgeIndex).end;
+								pathRecord[pointTo] = edgeIndex;
 
-							dpFunction[pointTo] = calculateCost(edgeIndex, k);
-						} else { // no restriction
-							for (int edgeIndex : distance.get(startNode)) {
-								if (!notCover.get(k).contains(edgeIndex)) {
+								dpFunction[pointTo] = calculateCost(edgeIndex, k);
+							} else { // no restriction
+								for (int edgeIndex : distance.get(startNode)) {
+									if (!notCover.get(k).contains(edgeIndex)) {
 
-									double cost = calculateCost(edgeIndex, k);
-									int pointTo = edgeSet.get(edgeIndex).end;
-									if (cost < dpFunction[pointTo]) {
-										dpFunction[pointTo] = cost;
-										pathRecord[pointTo] = edgeIndex;
+										double cost = calculateCost(edgeIndex, k);
+										int pointTo = edgeSet.get(edgeIndex).end;
+										if (cost < dpFunction[pointTo]) {
+											dpFunction[pointTo] = cost;
+											pathRecord[pointTo] = edgeIndex;
+										}
 									}
 								}
 							}
-						}
 
-						// update t in[0,T]
-						// Initialize
-						int nextCoverTime = -1;
-						int nextStartPoint = -1;
-						for (int time = nextCoverTime + 1; time <= T; time++) {
-							if (cover[k][time] > 0) {
-								nextCoverTime = time;
-								nextStartPoint = edgeSet.get(cover[k][time]).start;
+							// update t in[0,T]
+							// Initialize
+							int nextCoverTime = -1;
+							int nextStartPoint = -1;
+							for (int time = nextCoverTime + 1; time <= T; time++) {
+								if (cover[k][time] > 0) {
+									nextCoverTime = time;
+									nextStartPoint = edgeSet.get(cover[k][time]).start;
+									break;
+								}
+							}
+
+							if (nextStartPoint < 0) {
+								nextCoverTime = T + 1;
+							}
+
+							int currentTime = 0;
+							// update dpFunction
+							while (currentTime < T) {
+
+								if (currentTime < nextCoverTime) {
+
+									for (int node = 0; node < numOfCity; node++) {
+
+										int nodeIndex = node * (T + 1) + currentTime;
+										if (dpFunction[nodeIndex] < Double.MAX_VALUE / 100000) {
+
+											for (int edgeIndex : distance.get(nodeIndex)) {
+												Edge edge = edgeSet.get(edgeIndex);
+												if ((edge.t2 < nextCoverTime
+														|| (edge.t2 == nextCoverTime && edge.end == nextStartPoint))
+														&& !notCover.get(k).contains(edgeIndex)) {
+
+													double cost = calculateCost(edgeIndex, k);
+
+													if (dpFunction[edge.end] > dpFunction[nodeIndex] + cost) {
+														dpFunction[edge.end] = dpFunction[nodeIndex] + cost;
+														pathRecord[edge.end] = edgeIndex;
+													}
+
+												}
+											}
+										}
+									}
+
+									currentTime++;
+
+								} else {// currentTime=nextCoverTime
+									int edgeIndex = cover[k][nextCoverTime];
+									Edge edge = edgeSet.get(edgeIndex);
+
+									double cost = calculateCost(edgeIndex, k);
+
+									dpFunction[edge.end] = dpFunction[edge.start] + cost;
+									pathRecord[edge.end] = edgeIndex;
+
+									nextStartPoint = -1;
+									for (int time = nextCoverTime + 1; time <= T; time++) {
+										if (cover[k][time] > 0) {
+											nextCoverTime = time;
+											nextStartPoint = edgeSet.get(cover[k][time]).start;
+											break;
+										}
+									}
+									if (nextStartPoint < 0) {
+										nextCoverTime = T + 1;
+									}
+
+									currentTime = edge.t2;
+
+								}
+
+							}
+
+							// destination
+							if (cover[k][T] > 0) {
+								int edgeIndex = cover[k][T];
+								Edge edge = edgeSet.get(edgeIndex);
+								double cost = calculateCost(edgeIndex, k);
+
+								totalPathCost = dpFunction[edge.start] + cost;
+								lastEdgeIndex = edgeIndex;
+
+							} else {
+								for (int node = 0; node < numOfCity; node++) {
+									int nodeIndex = node * (T + 1) + T;
+									if (dpFunction[nodeIndex] < Double.MAX_VALUE / 100000) {
+										for (int edgeIndex : distance.get(nodeIndex)) {
+											if (edgeSet.get(edgeIndex).setIndex == 4) {
+
+												double cost = calculateCost(edgeIndex, k);
+												if (totalPathCost > dpFunction[nodeIndex] + cost) {
+													totalPathCost = dpFunction[nodeIndex] + cost;
+													lastEdgeIndex = edgeIndex;
+												}
+											}
+										}
+									}
+								}
+							}
+
+							
+							
+							
+							
+							double pik = BMP.getDual(truckConstraint[k]);
+							if (totalPathCost - pik < -RC_EPS) { // add this path as column of BMP
+
+								// a new path
+								Path newPath = new Path();
+								newPath.truckIndex = k;
+								HashSet<Integer> edgeIndexSet = new HashSet<Integer>();
+
+								// add all the edges to edgeIndexSet
+								int currentEdgeIndex = lastEdgeIndex;
+								edgeIndexSet.add(currentEdgeIndex);
+								int tempNode = edgeSet.get(currentEdgeIndex).start;
+
+								while (edgeSet.get(currentEdgeIndex).setIndex != 3) {
+									currentEdgeIndex = pathRecord[tempNode];
+									edgeIndexSet.add(currentEdgeIndex);
+									tempNode = edgeSet.get(currentEdgeIndex).start;
+								}
+
+								// build up the column
+								IloColumn addColumn = BMP.column(obj, 0);
+
+								double para = 0;
+								for (int i = 0; i < optimalCut.size(); i++) {
+									para = 0;
+									for (int edgeIndex : edgeIndexSet) {
+										para += optimalCut.get(i)[k * numOfedge + edgeIndex];
+									}
+									addColumn = addColumn.and(BMP.column(optConstraint[i], para));
+
+								}
+
+								for (int i = 0; i < feasibleCut.size(); i++) {
+									para = 0;
+									for (int edgeIndex : edgeIndexSet) {
+										para += feasibleCut.get(i)[k * numOfedge + edgeIndex];
+									}
+									addColumn = addColumn.and(BMP.column(feaConstraint[i], para));
+
+								}
+
+								addColumn = addColumn.and(BMP.column(truckConstraint[k], 1));
+
+								newPath.column = BMP.numVar(addColumn, 0, Double.MAX_VALUE);
+								newPath.ifInModel = true;
+								newPath.edgeIndexSet = edgeIndexSet;
+								pathSet.add(newPath);
+								check = true;
+								count++;
+								break;
+
+							} else { // totalPathCost-pik>0
+
+							}
+
+						}
+						
+						
+						
+						BMP.solve();
+						// check if all artificial vars are 0
+						ifAllZero = true;
+						for (int i = 1; i < numOfTruck + 2; i++) {
+//							System.out.println("Now i= " + i + " " + BMP.getValue(z[i]));
+							if (Math.abs(BMP.getValue(z[i])) > RC_EPS) {
+								ifAllZero = false;
 								break;
 							}
 						}
-
-						if (nextStartPoint < 0) {
-							nextCoverTime = T + 1;
-						}
-
-						int currentTime = 0;
-						// update dpFunction
-						while (currentTime < T) {
-
-							if (currentTime < nextCoverTime) {
-
-								for (int node = 0; node < numOfCity; node++) {
-
-									int nodeIndex = node * (T + 1) + currentTime;
-									if (dpFunction[nodeIndex] < Double.MAX_VALUE / 100000) {
-
-										for (int edgeIndex : distance.get(nodeIndex)) {
-											Edge edge = edgeSet.get(edgeIndex);
-											if ((edge.t2 < nextCoverTime
-													|| (edge.t2 == nextCoverTime && edge.end == nextStartPoint))
-													&& !notCover.get(k).contains(edgeIndex)) {
-
-												double cost = calculateCost(edgeIndex, k);
-
-												if (dpFunction[edge.end] > dpFunction[nodeIndex] + cost) {
-													dpFunction[edge.end] = dpFunction[nodeIndex] + cost;
-													pathRecord[edge.end] = edgeIndex;
-												}
-
-											}
-										}
-									}
-								}
-
-								currentTime++;
-
-							} else {// currentTime=nextCoverTime
-								int edgeIndex = cover[k][nextCoverTime];
-								Edge edge = edgeSet.get(edgeIndex);
-
-								double cost = calculateCost(edgeIndex, k);
-
-								dpFunction[edge.end] = dpFunction[edge.start] + cost;
-								pathRecord[edge.end] = edgeIndex;
-
-								nextStartPoint = -1;
-								for (int time = nextCoverTime + 1; time <= T; time++) {
-									if (cover[k][time] > 0) {
-										nextCoverTime = time;
-										nextStartPoint = edgeSet.get(cover[k][time]).start;
-										break;
-									}
-								}
-								if (nextStartPoint < 0) {
-									nextCoverTime = T + 1;
-								}
-
-								currentTime = edge.t2;
-
-							}
-
-						}
-
-						// destination
-						if (cover[k][T] > 0) {
-							int edgeIndex = cover[k][T];
-							Edge edge = edgeSet.get(edgeIndex);
-							double cost = calculateCost(edgeIndex, k);
-
-							totalPathCost = dpFunction[edge.start] + cost;
-							lastEdgeIndex = edgeIndex;
-
-						} else {
-							for (int node = 0; node < numOfCity; node++) {
-								int nodeIndex = node * (T + 1) + T;
-								if (dpFunction[nodeIndex] < Double.MAX_VALUE / 100000) {
-									for (int edgeIndex : distance.get(nodeIndex)) {
-										if (edgeSet.get(edgeIndex).setIndex == 4) {
-
-											double cost = calculateCost(edgeIndex, k);
-											if (totalPathCost > dpFunction[nodeIndex] + cost) {
-												totalPathCost = dpFunction[nodeIndex] + cost;
-												lastEdgeIndex = edgeIndex;
-											}
-										}
-									}
-								}
-							}
-						}
-
-						double pik = BMP.getDual(truckConstraint[k]);
-						if (totalPathCost - pik < -RC_EPS) { // add this path as column of BMP
-
-							// a new path
-							Path newPath = new Path();
-							newPath.truckIndex = k;
-							HashSet<Integer> edgeIndexSet = new HashSet<Integer>();
-
-							// add all the edges to edgeIndexSet
-							int currentEdgeIndex = lastEdgeIndex;
-							edgeIndexSet.add(currentEdgeIndex);
-							int tempNode = edgeSet.get(currentEdgeIndex).start;
-
-							while (edgeSet.get(currentEdgeIndex).setIndex != 3) {
-								currentEdgeIndex = pathRecord[tempNode];
-								edgeIndexSet.add(currentEdgeIndex);
-								tempNode = edgeSet.get(currentEdgeIndex).start;
-							}
-
-							// build up the column
-							IloColumn addColumn = BMP.column(obj, 0);
-
-							double para = 0;
-							for (int i = 0; i < optimalCut.size(); i++) {
-								para = 0;
-								for (int edgeIndex : edgeIndexSet) {
-									para += optimalCut.get(i)[k * numOfedge + edgeIndex];
-								}
-								addColumn = addColumn.and(BMP.column(optConstraint[i], para));
-
-							}
-
-							for (int i = 0; i < feasibleCut.size(); i++) {
-								para = 0;
-								for (int edgeIndex : edgeIndexSet) {
-									para += feasibleCut.get(i)[k * numOfedge + edgeIndex];
-								}
-								addColumn = addColumn.and(BMP.column(feaConstraint[i], para));
-
-							}
-
-							addColumn = addColumn.and(BMP.column(truckConstraint[k], 1));
-
-							newPath.column = BMP.numVar(addColumn, 0, Double.MAX_VALUE);
-							newPath.ifInModel = true;
-							newPath.edgeIndexSet = edgeIndexSet;
-							pathSet.add(newPath);
-							check = true;
-							count++;
+						
+						if(!check||(count>1000&&ifAllZero)) {
 							break;
-
-						} else { // totalPathCost-pik>0
-
 						}
-
+						
+						
+						
 					}
 				}
 
-				System.out.println("check= " + check);
-				System.out.println("count= " + count);
-				BMP.exportModel("tempout.lp");
-				// check if all artificial vars are 0
-				boolean ifAllZero = true;
-				for (int i = 1; i < numOfTruck + 2; i++) {
-					if (Math.abs(BMP.getValue(z[i])) > RC_EPS) {
-						ifAllZero = false;
-						break;
-					}
+
+				
+
+				if (!check) {
+					System.out.println("There is no path with negative reduced cost!");
+				} else {
+					System.out.println("There is still path with negative reduced cost¡£");
+				}
+				System.out.println("We add " + count + "paths to BMP.");
+				// BMP.exportModel("tempout.lp");
+
+//				// check if all artificial vars are 0
+//				boolean ifAllZero = true;
+//				for (int i = 1; i < numOfTruck + 2; i++) {
+//					System.out.println("Now i= " + i + " " + BMP.getValue(z[i]));
+//					if (Math.abs(BMP.getValue(z[i])) > RC_EPS) {
+//						ifAllZero = false;
+//						break;
+//					}
+//				}
+
+				if (ifAllZero) {
+					System.out.println("All artifacial vars equals 0");
+				} else {
+					System.out.println("Not all artifacial vars equals 0");
 				}
 
 				tempSolution = new double[numOfY];
-				if ((check || (!check && ifAllZero)) && overUB) {
+				if ((check) || (!check && ifAllZero)) {
 					// check if all vars are integeral
+					System.out.println("Check if all vars are integeral?");
 					boolean ifIntegeral = true;
 					for (int k = 0; k < numOfTruck; k++) {
 						for (int edge = 0; edge < numOfedge; edge++) {
@@ -746,9 +804,11 @@ public class Bender {
 							if (Math.abs(sum) < RC_EPS || Math.abs(sum - 1) < RC_EPS) {
 								tempSolution[numOfTruck * k + edge] = sum;
 							} else {
+
+								System.out.println("The answer is no, so we add a new branch!");
 								Node node1 = new Node();
-								HashSet<IloNumVar> extractCol = new HashSet<IloNumVar>();
-								HashSet<IloNumVar> addCol = new HashSet<IloNumVar>();
+								HashSet<Path> extractCol = new HashSet<Path>();
+								HashSet<Path> addCol = new HashSet<Path>();
 								node1.extractCol = extractCol;
 								node1.addCol = addCol;
 								node1.branchTruck = k;
@@ -758,8 +818,8 @@ public class Bender {
 								stack.add(node1);
 
 								Node node2 = new Node();
-								extractCol = new HashSet<IloNumVar>();
-								addCol = new HashSet<IloNumVar>();
+								extractCol = new HashSet<Path>();
+								addCol = new HashSet<Path>();
 								node2.extractCol = extractCol;
 								node2.addCol = addCol;
 								node2.branchTruck = k;
@@ -780,7 +840,9 @@ public class Bender {
 
 					if (ifIntegeral) {
 						// currentNode.ifAddCol = true;
+						System.out.println("We find a new feasible solution.");
 						if (BMP.getObjValue() < UB) {
+							System.out.println("And the UB is updated");
 							UB = BMP.getObjValue();
 							System.arraycopy(tempSolution, 0, optSolution, 0, numOfY);
 						}
@@ -791,24 +853,32 @@ public class Bender {
 				currentNode.ifAddCol = true;
 			} else { // currentNode.ifAddCol == true, we extract the node
 				currentNode = stack.pop();
+				System.out.println("We should extract current node.");
 
-				// deal with extractCol,addCol
-				for (IloNumVar var : currentNode.addCol) {
-					BMP.remove(var);
-				}
+				if (currentNode.branchTruck > 0) {
 
-				for (IloNumVar var : currentNode.extractCol) {
-					BMP.add(var);
-				}
+					// deal with extractCol,addCol
+					for (Path path : currentNode.addCol) {
+						BMP.remove(path.column);
+						path.ifInModel = false;
 
-				// deal with cover and notCover
-				if (currentNode.ifCover == false) {
-					notCover.get(currentNode.branchTruck).remove(currentNode.branchEdge);
-				} else {
-					if (edgeSet.get(currentNode.branchEdge).setIndex == 3) {
-						cover[currentNode.branchTruck][T + 1] = -1;
+					}
+
+					System.out.println(currentNode.extractCol.size());
+					for (Path path : currentNode.extractCol) {
+						BMP.add(path.column);
+						path.ifInModel = true;
+					}
+
+					// deal with cover and notCover
+					if (currentNode.ifCover == false) {
+						notCover.get(currentNode.branchTruck).remove(currentNode.branchEdge);
 					} else {
-						cover[currentNode.branchTruck][currentNode.branchEdge % (T + 1)] = -1;
+						if (edgeSet.get(currentNode.branchEdge).setIndex == 3) {
+							cover[currentNode.branchTruck][T + 1] = -1;
+						} else {
+							cover[currentNode.branchTruck][currentNode.branchEdge % (T + 1)] = -1;
+						}
 					}
 				}
 
@@ -833,7 +903,7 @@ public class Bender {
 
 	private class Node {
 
-		HashSet<IloNumVar> extractCol, addCol;
+		HashSet<Path> extractCol, addCol;
 		int branchTruck, branchEdge;
 		boolean ifCover;
 
