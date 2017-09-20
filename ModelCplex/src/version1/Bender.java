@@ -17,7 +17,7 @@ public class Bender {
 	 * Notice that here we exchange variable x and y compared with class Data
 	 */
 
-	static double RC_EPS = Math.pow(10, -5);
+	static double RC_EPS = Math.pow(10, -7);
 	private double UB, LB;
 	private double[] c, f, b;
 	private double[][] A, B;
@@ -282,15 +282,15 @@ public class Bender {
 
 			// solve BMP and produce new currentY, fy, b_By
 			System.out.println("||----Now solve the BMP----||");
-			boolean ifFeasible = BMP();
+			double ifFeasible = BMP();
 			// System.out.println(BMP.toString());
 
-			if (!ifFeasible) {// infeasible or unbounded
+			if (ifFeasible<Double.MIN_VALUE/10) {// infeasible or unbounded
 				System.out.println("-->The BMP is infeasible");
 				System.out.println("The problem is infeasible!");
 				return;
 			} else {
-				System.out.print("-->The BMP is has an optimal solution, ");
+				System.out.print("-->The BMP  has an optimal solution, ");
 				// currentY = BMP.getValues(Y1);
 				System.out.println("and the new currentY is" + Arrays.toString(currentY));
 
@@ -309,7 +309,7 @@ public class Bender {
 					fy += f[i] * currentY[i];
 				}
 
-				LB = BMP.getObjValue();
+				LB = ifFeasible;
 				System.out.println("The new LB is " + LB);
 			}
 
@@ -334,7 +334,7 @@ public class Bender {
 	 *         false;
 	 * @throws IloException
 	 */
-	public boolean BMP() throws IloException {
+	public double BMP() throws IloException {
 
 		double UB = Double.MAX_VALUE;
 		double LB = Double.MIN_VALUE;
@@ -531,6 +531,8 @@ public class Bender {
 						System.out.println("LB update to "+LB);
 					}
 					
+					
+					int truckStartIndex=0;
 					for (;;) {
 
 						/// FIND AND ADD A NEW SHORTEST PATH///
@@ -543,8 +545,10 @@ public class Bender {
 						double totalPathCost = Double.MAX_VALUE;
 						int lastEdgeIndex = -1;
 
-						for (int k = 0; k < numOfTruck; k++) {
+						for (int kk = 0; kk < numOfTruck; kk++) {
 
+							int k=(truckStartIndex+kk)%numOfTruck;
+							
 							double[] dpFunction = new double[numOfTruck * (T + 1)];
 							int[] pathRecord = new int[numOfTruck * (T + 1)];
 							for (int i = 0; i < dpFunction.length; i++) {
@@ -727,11 +731,15 @@ public class Bender {
 								pathSet.add(newPath);
 								check = true;
 								count++;
+								System.out.println("We add #"+count+" path to this node, and the path belong to truck "+k);
+								truckStartIndex=k+1;
 								break;
 
 							} else { // totalPathCost-pik>0
 
 							}
+							
+							
 
 						}
 						
@@ -741,14 +749,17 @@ public class Bender {
 						// check if all artificial vars are 0
 						ifAllZero = true;
 						for (int i = 1; i < numOfTruck + 2; i++) {
+							System.out.print(BMP.getValue(z[i])+" ");
 //							System.out.println("Now i= " + i + " " + BMP.getValue(z[i]));
 							if (Math.abs(BMP.getValue(z[i])) > RC_EPS) {
+
 								ifAllZero = false;
 								break;
 							}
 						}
 						
 						if(!check||(count>1000&&ifAllZero)) {
+							BMP.exportModel("BMP.lp");
 							break;
 						}
 						
@@ -765,7 +776,7 @@ public class Bender {
 				} else {
 					System.out.println("There is still path with negative reduced cost¡£");
 				}
-				System.out.println("We add " + count + "paths to BMP.");
+				System.out.println("We add " + count + " paths to BMP.");
 				// BMP.exportModel("tempout.lp");
 
 //				// check if all artificial vars are 0
@@ -800,6 +811,7 @@ public class Bender {
 									sum += BMP.getValue(path.column);
 								}
 							}
+							System.out.print(sum+" ");
 
 							if (Math.abs(sum) < RC_EPS || Math.abs(sum - 1) < RC_EPS) {
 								tempSolution[numOfTruck * k + edge] = sum;
@@ -885,11 +897,11 @@ public class Bender {
 			}
 		}
 
-		if (optSolution[0] != -1)
-			return false;
+		if (optSolution[0] == -1)
+			return Double.MIN_VALUE;
 
 		System.arraycopy(optSolution, 0, currentY, 0, numOfY);
-		return true;
+		return BMP.getObjValue();
 
 	}
 
