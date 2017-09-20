@@ -285,7 +285,7 @@ public class Bender {
 			double ifFeasible = BMP();
 			// System.out.println(BMP.toString());
 
-			if (ifFeasible<Double.MIN_VALUE/10) {// infeasible or unbounded
+			if (Math.abs(ifFeasible-Double.MIN_VALUE/10)<RC_EPS) {// infeasible or unbounded
 				System.out.println("-->The BMP is infeasible");
 				System.out.println("The problem is infeasible!");
 				return;
@@ -840,6 +840,7 @@ public class Bender {
 								node2.ifAddCol = false;
 								stack.add(node1);
 
+								
 								// currentNode.ifAddCol=true;
 								ifIntegeral = false;
 								break;
@@ -897,11 +898,15 @@ public class Bender {
 			}
 		}
 
-		if (optSolution[0] == -1)
-			return Double.MIN_VALUE;
+		if (Math.abs(optSolution[0]+1)<RC_EPS) {
+			return Double.MIN_VALUE/10;
+		}else {
+			System.arraycopy(optSolution, 0, currentY, 0, numOfY);
+			return BMP.getObjValue();
+		}
 
-		System.arraycopy(optSolution, 0, currentY, 0, numOfY);
-		return BMP.getObjValue();
+
+
 
 	}
 
