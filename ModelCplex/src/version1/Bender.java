@@ -333,8 +333,9 @@ public class Bender {
 	 * @return if BMP has optimal solution ,return true if BMP is infeasible, return
 	 *         false;
 	 * @throws IloException
+	 * @throws FileNotFoundException 
 	 */
-	public double BMP() throws IloException {
+	public double BMP() throws IloException, FileNotFoundException {
 
 		double UB = Double.MAX_VALUE;
 		double LB = Double.MIN_VALUE;
@@ -531,6 +532,19 @@ public class Bender {
 						System.out.println("LB update to "+LB);
 					}
 					
+
+					
+					
+					PrintWriter out= new PrintWriter("tempout.txt");
+					out.println("feasibleCut= ");
+					
+					for(int e=0;e<edgeSet.size();e++) {
+						for(int truck=0;truck<numOfTruck;truck++) {
+							out.print(feasibleCut.get(0)[truck*numOfTruck]+e+" ");
+						}
+						out.println();
+					}
+					out.close();
 					
 					int truckStartIndex=0;
 					for (;;) {
@@ -539,6 +553,13 @@ public class Bender {
 						optPrice = BMP.getDuals(optConstraint);
 						feaPrice = BMP.getDuals(feaConstraint);
 						truckPrice = BMP.getDuals(truckConstraint);
+						
+						System.out.print("optPrice= ");
+						System.out.println(Arrays.toString(optPrice));
+						System.out.print("feaPrice= ");
+						System.out.println(Arrays.toString(feaPrice));
+						System.out.print("truckPrice= ");
+						System.out.println(Arrays.toString(truckPrice));
 
 						// if all of k trucks don't have negative reduced cost, then check=false
 						check = false;
@@ -732,6 +753,18 @@ public class Bender {
 								check = true;
 								count++;
 								System.out.println("We add #"+count+" path to this node, and the path belong to truck "+k);
+								
+								///--------------------------------------------------check shortest path problem-----------------///
+								if(count==1) {
+									for(int edgeIndex:edgeIndexSet) {
+										Edge temp=edgeSet.get(edgeIndex);
+										System.out.println("start= "+temp.u+" at time "+temp.t1+"     end= "+temp.v+" at time "+temp.t2);
+									}
+								}
+
+								
+								
+								///----------------------------check end--------------------------------------------------------///
 								truckStartIndex=k+1;
 								break;
 
