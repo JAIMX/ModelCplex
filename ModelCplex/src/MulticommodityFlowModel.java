@@ -750,7 +750,7 @@ public class MulticommodityFlowModel {
                 }
             }
 
-            cplex.exportModel("Model_2.lp");
+            cplex.exportModel("MulticommodityFlowModel.lp");
             // cplex.setParam(IloCplex.Param.RootAlgorithm,
             // IloCplex.Algorithm.Primal);
             cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
