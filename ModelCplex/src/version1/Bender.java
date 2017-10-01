@@ -544,6 +544,7 @@ public class Bender {
 						}
 						out.println();
 					}
+					out.println("feasibleCut[bi]= "+feasibleCut.get(0)[numOfTruck*numOfedge]);
 					out.close();
 					
 					int truckStartIndex=0;
