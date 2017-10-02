@@ -24,6 +24,10 @@ public class Bender {
 	Data data;
 
 	public Bender(double[] c, double[] f, double[] b, double[][] A, double[][] B, Data data) throws IloException {
+		
+//		System.out.println("c= "+Arrays.toString(c));
+//		System.out.println("f= "+Arrays.toString(f));
+//		System.out.println("b= "+Arrays.toString(b));
 		numY = c.length;
 		numX = f.length;
 		numConstraint = A.length;
@@ -247,12 +251,15 @@ public class Bender {
 //			double[] xValues = master.getValues(x);
 //			System.out.println("x= " + Arrays.toString(xValues));
 //			System.out.println("y= " + Arrays.toString(yValues));
+		}else {
+			System.out.println("The last master's status is "+master.getStatus().toString());
 		}
 	}
 	
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		data.readData("out2.txt");
+//		data.readData("out2.txt");
+		data.readData("out_small.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 		
