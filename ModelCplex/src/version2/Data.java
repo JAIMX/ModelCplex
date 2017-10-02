@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
+
+
 public class Data {
 
 	private class demandPair {
@@ -36,7 +38,7 @@ public class Data {
 	int[] truckCapacity;
 	int[] truckStartNode;
 
-	final int T = 36;
+	int T;
 	int[][] b;
 	static double e = Math.pow(10, -2);
 	boolean[][] connect;
@@ -229,6 +231,7 @@ public class Data {
 			lIndex = temp.indexOf("'", rIndex);
 			rIndex = temp.indexOf("'", lIndex + 1);
 		}
+		T = (int) arrivalTime[0];
 
 		temp = in.nextLine();
 		assert (temp.substring(0, 6) == "process") : "Wrong processingTime";
@@ -454,23 +457,37 @@ public class Data {
 		for (int o = 0; o < numberOfCities; o++) {
 			int oIndex = numberOfCities * (T + 1) + o;
 
-			for (int node = 0; node < numberOfCities; node++) {
-				int nodeIndex = node * (T + 1);
-				Edge edge = new Edge();
-				edge.start = oIndex;
-				edge.end = nodeIndex;
-				edge.length = length[o][node];
-				edge.setIndex = 3;
-				edge.u = o;
-				edge.v = node;
-				edge.t1 = -1;
-				edge.t2 = 0;
-
-				edgeSet.add(edge);
-				distance.get(oIndex).add(edgeSet.size() - 1);
-				distanceReverse.get(edge.end).add(edgeSet.size() - 1);
-				connect[oIndex][nodeIndex] = true;
-			}
+			// for (int node = 0; node < numberOfCities; node++) {
+			// int nodeIndex = node * (T + 1);
+			// Edge edge = new Edge();
+			// edge.start = oIndex;
+			// edge.end = nodeIndex;
+			// edge.length = length[o][node];
+			// edge.setIndex = 3;
+			// edge.u = o;
+			// edge.v = node;
+			// edge.t1 = -1;
+			// edge.t2 = 0;
+			//
+			// edgeSet.add(edge);
+			// distance.get(oIndex).add(edgeSet.size() - 1);
+			// distanceReverse.get(edge.end).add(edgeSet.size() - 1);
+			// connect[oIndex][nodeIndex] = true;
+			// }
+			int nodeIndex = o * (T + 1);
+			Edge edge = new Edge();
+			edge.start=oIndex;
+			edge.end = nodeIndex;
+			edge.length = 0;
+			edge.setIndex = 3;
+			edge.u = o;
+			edge.v = o;
+			edge.t1 = -1;
+			edge.t2 = 0;
+			edgeSet.add(edge);
+			distance.get(oIndex).add(edgeSet.size()-1);
+			connect[oIndex][nodeIndex] = true;
+			distanceReverse.get(edge.end).add(edgeSet.size()-1);
 		}
 
 		numOfEdge3 = edgeSet.size() - numOfEdge1 - numOfEdge2;
@@ -478,23 +495,39 @@ public class Data {
 		// add AD:(nT,Dk)
 		for (int node = 0; node < numberOfCities; node++) {
 			int nodeIndex = node * (T + 1) + T;
-			for (int d = 0; d < numberOfCities; d++) {
-				int dIndex = numberOfCities * (T + 2) + d;
-				Edge edge = new Edge();
-				edge.start = nodeIndex;
-				edge.end = dIndex;
-				edge.length = length[node][d];
-				edge.setIndex = 4;
-				edge.u = node;
-				edge.v = d;
-				edge.t1 = T;
-				edge.t2 = -1;
-				edgeSet.add(edge);
-				distance.get(nodeIndex).add(edgeSet.size() - 1);
-				distanceReverse.get(dIndex).add(edgeSet.size() - 1);
-				connect[nodeIndex][dIndex] = true;
+//			for (int d = 0; d < numberOfCities; d++) {
+//				int dIndex = numberOfCities * (T + 2) + d;
+//				Edge edge = new Edge();
+//				edge.start = nodeIndex;
+//				edge.end = dIndex;
+//				edge.length = length[node][d];
+//				edge.setIndex = 4;
+//				edge.u = node;
+//				edge.v = d;
+//				edge.t1 = T;
+//				edge.t2 = -1;
+//				edgeSet.add(edge);
+//				distance.get(nodeIndex).add(edgeSet.size() - 1);
+//				distanceReverse.get(dIndex).add(edgeSet.size() - 1);
+//				connect[nodeIndex][dIndex] = true;
+//
+//			}
+			
+			int dIndex = numberOfCities * (T + 2) + node;
+			Edge edge = new Edge();
+			edge.end = dIndex;
+			edge.start=nodeIndex;
+			edge.length = 0;
+			edge.setIndex = 4;
+			edge.u = node;
+			edge.v = node;
+			edge.t1 = T;
+			edge.t2 = -2;
+			edgeSet.add(edge);
+			distance.get(nodeIndex).add(edgeSet.size()-1);
+			distanceReverse.get(dIndex).add(edgeSet.size()-1);
+			connect[nodeIndex][dIndex] = true;
 
-			}
 		}
 
 		numOfEdge4 = edgeSet.size() - numOfEdge1 - numOfEdge2 - numOfEdge3;
@@ -523,12 +556,12 @@ public class Data {
 			}
 		}
 
-//		for(int e=0;e<numOfEdge12;e++) {
-//			for(int p=0;p<numberOfDemandPair;p++) {
-//				System.out.print(c[p*numOfEdge12+e]+" ");
-//			}
-//			System.out.println();
-//		}
+		// for(int e=0;e<numOfEdge12;e++) {
+		// for(int p=0;p<numberOfDemandPair;p++) {
+		// System.out.print(c[p*numOfEdge12+e]+" ");
+		// }
+		// System.out.println();
+		// }
 
 		f = new double[numOfx];
 		double constant = fixedCost / (averageSpeed * drivingTimePerDay);
@@ -539,14 +572,15 @@ public class Data {
 				index++;
 			}
 		}
-		
-//		for (int e = 0; e < edgeSet.size(); e++) {
-//			for (int k = 0; k < numberOfTrucks; k++) {
-//				System.out.print(f[k * edgeSet.size() + e] + " ");
-//			}
-//			System.out.println();
-//		}
 
+		// for (int e = 0; e < edgeSet.size(); e++) {
+		// for (int k = 0; k < numberOfTrucks; k++) {
+		// System.out.print(f[k * edgeSet.size() + e] + " ");
+		// }
+		// System.out.println();
+		// }
+
+//		numOfconstraint = numberOfCities * (T + 1) * numberOfDemandPair * 2 + numOfEdge1 + 2 * numberOfTrucks;
 		numOfconstraint = numberOfCities * (T + 1) * numberOfDemandPair * 2 + numOfEdge1 + 2 * numberOfTrucks;
 		A = new double[numOfconstraint][numOfy];
 		B = new double[numOfconstraint][numOfx];
@@ -574,37 +608,38 @@ public class Data {
 			}
 		}
 
-//		System.out.println("node 1 point to: ");
-//
-//		for(int edgeIndex:distance.get(1)) {
-//			System.out.print(edgeSet.get(edgeIndex).end+" "+edgeIndex+" ");
-//		}
-//
-//		System.out.println();
-//		System.out.println("node 1 point from: ");
-//		for(int edgeIndex:distanceReverse.get(1)) {
-//			System.out.print(edgeSet.get(edgeIndex).start+" "+edgeSet.get(edgeIndex).setIndex+" "+edgeIndex+" ");
-//		}
-//
-//
-//		System.out.println();
-//		int temp = 0;
-//		for (int p = 0; p < numberOfDemandPair; p++) {
-//			for (int e = 0; e < numOfEdge12; e++) {
-//				System.out.print(A[1][temp] + " ");
-//				temp++;
-//			}
-//			System.out.println();
-//		}
-//		System.out.println();
-//		temp = 0;
-//		for (int p = 0; p < numberOfDemandPair; p++) {
-//			for (int e = 0; e < numOfEdge12; e++) {
-//				System.out.print(A[222][temp] + " ");
-//				temp++;
-//			}
-//			System.out.println();
-//		}
+		// System.out.println("node 1 point to: ");
+		//
+		// for(int edgeIndex:distance.get(1)) {
+		// System.out.print(edgeSet.get(edgeIndex).end+" "+edgeIndex+" ");
+		// }
+		//
+		// System.out.println();
+		// System.out.println("node 1 point from: ");
+		// for(int edgeIndex:distanceReverse.get(1)) {
+		// System.out.print(edgeSet.get(edgeIndex).start+"
+		// "+edgeSet.get(edgeIndex).setIndex+" "+edgeIndex+" ");
+		// }
+		//
+		//
+		// System.out.println();
+		// int temp = 0;
+		// for (int p = 0; p < numberOfDemandPair; p++) {
+		// for (int e = 0; e < numOfEdge12; e++) {
+		// System.out.print(A[1][temp] + " ");
+		// temp++;
+		// }
+		// System.out.println();
+		// }
+		// System.out.println();
+		// temp = 0;
+		// for (int p = 0; p < numberOfDemandPair; p++) {
+		// for (int e = 0; e < numOfEdge12; e++) {
+		// System.out.print(A[222][temp] + " ");
+		// temp++;
+		// }
+		// System.out.println();
+		// }
 
 		for (int p = 0; p < numberOfDemandPair; p++) {
 			for (int i = 0; i < numberOfCities * (T + 1); i++) {
@@ -638,27 +673,27 @@ public class Data {
 				B[row][k * edgeSet.size() + e] = truckCapacity[k];
 			}
 
-//			if (e == 1) {
-//				int temp = 0;
-//				for (int k = 0; k < numberOfTrucks; k++) {
-//					for (int ee = 0; ee < edgeSet.size(); ee++) {
-//						System.out.print(B[row][temp] + " ");
-//						temp++;
-//					}
-//					System.out.println();
-//				}
-//			}
-			
-//			if (e == 3) {
-//			int temp = 0;
-//			for (int p = 0; p < numberOfDemandPair; p++) {
-//				for (int ee = 0; ee < numOfEdge12; ee++) {
-//					System.out.print(A[row][temp] + " ");
-//					temp++;
-//				}
-//				System.out.println();
-//			}
-//		}
+			// if (e == 1) {
+			// int temp = 0;
+			// for (int k = 0; k < numberOfTrucks; k++) {
+			// for (int ee = 0; ee < edgeSet.size(); ee++) {
+			// System.out.print(B[row][temp] + " ");
+			// temp++;
+			// }
+			// System.out.println();
+			// }
+			// }
+
+			// if (e == 3) {
+			// int temp = 0;
+			// for (int p = 0; p < numberOfDemandPair; p++) {
+			// for (int ee = 0; ee < numOfEdge12; ee++) {
+			// System.out.print(A[row][temp] + " ");
+			// temp++;
+			// }
+			// System.out.println();
+			// }
+			// }
 
 			row++;
 		}
@@ -816,6 +851,6 @@ public class Data {
 		data.readData("out2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
-//		data.generateInitialx();
+		// data.generateInitialx();
 	}
 }
