@@ -125,7 +125,7 @@ public class Bender {
 				}
 
 				for (int edgeIndex : data.distanceReverse.get(i)) {
-					constraint1.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
+					constraint1.addTerm(-1, x[k * data.edgeSet.size() + edgeIndex]);
 				}
 
 				master.addEq(0, constraint1);
@@ -213,8 +213,8 @@ public class Bender {
 
 				// add a feasibility cut
 				IloConstraint r = add(master.le(expr, 0));
-//				System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-				System.out.println("\n>>> Adding feasibility cut: " +  "\n");
+				System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+//				System.out.println("\n>>> Adding feasibility cut: " +  "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 				if (zMaster < sub.getObjValue() - FUZZ) {
 
@@ -229,8 +229,8 @@ public class Bender {
 					}
 
 					IloConstraint r = add((IloRange) master.ge(z, expr));
-//					System.out.println("\n>>> Adding optimality cut: " + r + "\n");
-					System.out.println("\n>>> Adding optimality cut: " + "\n");
+					System.out.println("\n>>> Adding optimality cut: " + r + "\n");
+//					System.out.println("\n>>> Adding optimality cut: " + "\n");
 
 				} else {
 					System.out.println("\n>>> Accepting new incumbent with value " + getObjValue() + "\n");
