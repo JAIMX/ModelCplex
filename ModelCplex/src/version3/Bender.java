@@ -124,7 +124,7 @@ public class Bender {
 				}
 
 				for (int edgeIndex : data.distanceReverse.get(i)) {
-					constraint1.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
+					constraint1.addTerm(-1, x[k * data.edgeSet.size() + edgeIndex]);
 				}
 
 				master.addEq(0, constraint1);
@@ -176,7 +176,7 @@ public class Bender {
 			// ---constraint 6---//
 			IloLinearNumExpr constraint6 = master.linearNumExpr();
 			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
-				constraint5.addTerm(data.edgeSet.get(edgeIndex).length, x[k * data.edgeSet.size() + edgeIndex]);
+				constraint6.addTerm(data.edgeSet.get(edgeIndex).length, x[k * data.edgeSet.size() + edgeIndex]);
 			}
 			master.addGe(data.distanceLimit, constraint6);
 
@@ -227,7 +227,8 @@ public class Bender {
 
 				// add a feasibility cut
 				IloConstraint r = add(master.le(expr, 0));
-				// System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+//				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+//				 master.exportModel("check_for_small_data.lp");
 				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 				if (zMaster < sub.getObjValue() - FUZZ) {
@@ -243,7 +244,7 @@ public class Bender {
 					}
 
 					IloConstraint r = add((IloRange) master.ge(z, expr));
-					// System.out.println("\n>>> Adding optimality cut: " + r + "\n");
+//					 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
 					System.out.println("\n>>> Adding optimality cut: " + "\n");
 
 				} else {
@@ -273,7 +274,8 @@ public class Bender {
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
 //		data.readData("out2.txt");
-		data.readData("out_small.txt");
+//		data.readData("out_small.txt");
+		data.readData("temp.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 
