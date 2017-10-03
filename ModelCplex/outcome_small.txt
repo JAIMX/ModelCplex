@@ -1,0 +1,8 @@
+Variable X
+vehicle 0: v0,0->v1,1 = 0.9999999999999997
+vehicle 0: v0,2->d0 = 1.0
+vehicle 0: v1,1->v0,2 = 0.9999999999999997
+vehicle 0: o0->v0,0 = 1.0
+y[i][j][p]
+v1,0->v1,1for demand 1->0 :203.0
+v1,1->v0,2for demand 1->0 :203.0
