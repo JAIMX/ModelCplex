@@ -26,7 +26,7 @@ public class Bender {
 	public Bender(double[] c, double[] f, double[] b, double[][] A, double[][] B, Data data) throws IloException {
 //		System.out.println("c= "+Arrays.toString(c));
 //		System.out.println("f= "+Arrays.toString(f));
-		System.out.println("b= "+Arrays.toString(b));
+//		System.out.println("b= "+Arrays.toString(b));
 //		System.out.println("f= "+Arrays.toString(f));
 		
 		numY = c.length;
@@ -243,8 +243,8 @@ public class Bender {
 
 				// add a feasibility cut
 				IloConstraint r = add(master.le(expr, 0));
-				// System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-				System.out.println("\n>>> Adding feasibility cut: " + "\n");
+				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+//				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 				if (zMaster < sub.getObjValue() - FUZZ) {
 
@@ -259,8 +259,8 @@ public class Bender {
 					}
 
 					IloConstraint r = add((IloRange) master.ge(z, expr));
-					// System.out.println("\n>>> Adding optimality cut: " + r + "\n");
-					System.out.println("\n>>> Adding optimality cut: " + "\n");
+					 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
+//					System.out.println("\n>>> Adding optimality cut: " + "\n");
 
 				} else {
 					System.out.println("\n>>> Accepting new incumbent with value " + getObjValue() + "\n");
@@ -277,9 +277,9 @@ public class Bender {
 
 	public final void solve() throws IloException {
 //		master.setParam(IloCplex.Param.Emphasis.Memory, true);
-		master.setParam(IloCplex.DoubleParam.TreLim, 2048);
-		master.setParam(IloCplex.IntParam.NodeFileInd, 2);
-		master.setParam(IloCplex.Param.WorkMem, 2048);
+//		master.setParam(IloCplex.DoubleParam.TreLim, 2048);
+//		master.setParam(IloCplex.IntParam.NodeFileInd, 2);
+//		master.setParam(IloCplex.Param.WorkMem, 2048);
 		if (master.solve()) {
 			System.out.println("optimal obj= " + master.getObjValue());
 			// double[] xValues = master.getValues(x);
@@ -292,13 +292,13 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		data.readData("temp.txt");
-		System.out.println("Read data done!");
-//		data.readData("out_small.txt");
+//		data.readData("temp.txt");
+//		System.out.println("Read data done!");
+		data.readData("out_small.txt");
 		data.graphTransfer();
-		System.out.println("Graph transfer done!");
+//		System.out.println("Graph transfer done!");
 		data.matrixGenerator();
-		System.out.println("MatrixGenerator done!");
+//		System.out.println("MatrixGenerator done!");
 
 		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data);
 		test.solve();
