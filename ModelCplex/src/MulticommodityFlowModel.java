@@ -787,7 +787,7 @@ public class MulticommodityFlowModel {
 				}
 			}
 
-//			cplex.exportModel("MulticommodityFlowModel.lp");
+			cplex.exportModel("MulticommodityFlowModel.lp");
 			// cplex.setParam(IloCplex.Param.RootAlgorithm,
 			// IloCplex.Algorithm.Primal);
 			cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
@@ -859,7 +859,8 @@ public class MulticommodityFlowModel {
 
 	public static void main(String[] args) throws IOException, UnknownObjectException, IloException {
 		MulticommodityFlowModel test = new MulticommodityFlowModel();
-		test.readData("temp.txt");
+		test.readData("out_small.txt");
+//		test.readData("temp.txt");
 		test.graphTransfer();
 		test.ModelBuilding();
 		test.output();
