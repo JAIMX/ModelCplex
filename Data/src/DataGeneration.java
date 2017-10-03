@@ -4,27 +4,27 @@ import java.util.HashSet;
 
 public class DataGeneration {
     //city parameter
-    private int numberOfCity=6;
-    private int numberOfDemandODs=10;
-    private int demandLb=1000;
-    private int demandUb=8000;
+    private int numberOfCity=5;
+    private int numberOfDemandODs=5;
+    private int demandLb=2000;
+    private int demandUb=5000;
     private int coordinateLimitx=1200;
     private int coordinateLimity=1200;
     private int openTime=8;
     private int closeTime=20;
-    private int arrivalTime=72;
+    private int arrivalTime=6;
     private double processingTime=1;
     private int M=1000000;
     
     //truck parameter
     private double fixedCost=2000;
     private double transportationCost=0.002;
-    private int legLimit=2;
+    private int legLimit=4;
     private double distanceLimit=5000;
-    private double speed=60;
+    private double speed=600;
     private double drivingTimeLimit=10;
-    private int numberOfTrucksPerCity=3;
-    private int truckCapacity=9000;
+    private int numberOfTrucksPerCity=2;
+    private int truckCapacity=4000;
     
     
     
@@ -198,7 +198,7 @@ public class DataGeneration {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        DataGeneration data=new DataGeneration("out.txt");
+        DataGeneration data=new DataGeneration("temp.txt");
         data.NodeParameter();
         data.TruckParameter();
         data.close();
