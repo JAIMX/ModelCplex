@@ -228,7 +228,7 @@ public class Bender {
 				// add a feasibility cut
 				IloConstraint r = add(master.le(expr, 0));
 //				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-//				 master.exportModel("check_for_small_data.lp");
+				 master.exportModel("check_for_small_data.lp");
 				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 				if (zMaster < sub.getObjValue() - FUZZ) {
@@ -274,8 +274,8 @@ public class Bender {
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
 //		data.readData("out2.txt");
-//		data.readData("out_small.txt");
-		data.readData("temp.txt");
+		data.readData("out_small.txt");
+//		data.readData("temp.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 
