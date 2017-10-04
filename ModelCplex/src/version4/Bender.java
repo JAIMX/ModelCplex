@@ -148,14 +148,15 @@ public class Bender {
 				sub.dualFarkas(constraints, coefficients);
 
 				for (int row = 0; row < numConstraint; row++) {
-					IloConstraint c = subConstraint[row];
+//					IloConstraint c = subConstraint[row];
+					IloConstraint c = constraints[row];
 					expr = master.sum(expr, master.prod(coefficients[row], rhs.get(c)));
 				}
 
 				// add a feasibility cut
 				IloConstraint r = add(master.le(expr, 0));
-				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-//				System.out.println("\n>>> Adding feasibility cut: " + "\n");
+//				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 				if (zMaster < sub.getObjValue() - FUZZ) {
 
@@ -170,8 +171,8 @@ public class Bender {
 					}
 
 					IloConstraint r = add((IloRange) master.ge(z, expr));
-					 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
-//					System.out.println("\n>>> Adding optimality cut: " + "\n");
+//					 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
+					System.out.println("\n>>> Adding optimality cut: " + "\n");
 
 				} else {
 					System.out.println("\n>>> Accepting new incumbent with value " + getObjValue() + "\n");
@@ -203,9 +204,9 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-//		data.readData("temp.txt");
+		data.readData("temp.txt");
 //		System.out.println("Read data done!");
-		data.readData("out_small.txt");
+//		data.readData("out_small.txt");
 		data.graphTransfer();
 //		System.out.println("Graph transfer done!");
 		data.matrixGenerator();

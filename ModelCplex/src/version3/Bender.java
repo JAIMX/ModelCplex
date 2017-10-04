@@ -219,9 +219,16 @@ public class Bender {
 				IloConstraint[] constraints = new IloConstraint[numConstraint];
 				double[] coefficients = new double[numConstraint];
 				sub.dualFarkas(constraints, coefficients);
+				
+				for(int check=0;check<numConstraint;check++) {
+					if(constraints[check]!=subConstraint[check]) {
+						System.out.println("Error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					}
+				}
 
 				for (int row = 0; row < numConstraint; row++) {
-					IloConstraint c = subConstraint[row];
+//					IloConstraint c = subConstraint[row];
+					IloConstraint c = constraints[row];
 					expr = master.sum(expr, master.prod(coefficients[row], rhs.get(c)));
 				}
 
@@ -274,8 +281,9 @@ public class Bender {
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
 //		data.readData("out2.txt");
-		data.readData("out_small.txt");
+//		data.readData("out_small.txt");
 //		data.readData("temp.txt");
+		data.readData("./data/data2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 
