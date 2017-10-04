@@ -207,7 +207,8 @@ public class Bender {
 				sub.dualFarkas(constraints, coefficients);
 
 				for (int row = 0; row < numConstraint; row++) {
-					IloConstraint c = subConstraint[row];
+//					IloConstraint c = subConstraint[row];
+					IloConstraint c = constraints[row];
 					expr = master.sum(expr, master.prod(coefficients[row], rhs.get(c)));
 				}
 

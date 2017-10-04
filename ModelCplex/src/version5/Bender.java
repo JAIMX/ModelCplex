@@ -24,10 +24,10 @@ public class Bender {
 	int numX, numY, numConstraint;
 	double[] xValues, yValues; // subproblem y values ||master x values
 	IloRange[] subConstraint;
-	HashMap<IloConstraint, Integer> rhs; // here we use rhs to record the index of constraints in sub
+//	 HashMap<IloConstraint, Integer> rhs; // here we use rhs to record the index
+	// of constraints in sub
 	Data data;
 	double tolerance, UB, LB, zMaster;
-//	double[] optX, optY;
 
 	public Bender(double[] c, double[] f, double[] b, double[][] A, double[][] B, Data data, double tolerance)
 			throws IloException {
@@ -52,12 +52,12 @@ public class Bender {
 		this.A = A;
 		this.B = B;
 
-		rhs = new HashMap<IloConstraint, Integer>();
+//		 rhs = new HashMap<IloConstraint, Integer>();
 
 		// set up the master problem(which initially has no constraint)
 		master = new IloCplex();
 		BuildMaster();
-		// master.setOut(null);
+		master.setOut(null);
 		// System.out.println("Initial master is "+master.toString());
 		// master.use(new BendersCallback());
 
@@ -96,7 +96,7 @@ public class Bender {
 			expr = sub.scalProd(A[row], y);
 			subConstraint[row] = sub.addGe(expr, 0, "subConstraint_" + row);
 			// rhs.put(subConstraint[row], master.diff(b[row], master.scalProd(B[row], x)));
-			rhs.put(subConstraint[row], row);
+//			 rhs.put(subConstraint[row], row);
 		}
 
 		// System.out.println("initial subproblem is "+sub.toString());
@@ -195,27 +195,39 @@ public class Bender {
 		}
 	}
 
-	private class BendersCallback extends IloCplex.LazyConstraintCallback {
+	public final void solve() throws IloException {
+		master.solve();
+		zMaster = master.getValue(z);
+		xValues = master.getValues(x);
+		
+		double tempConst=0;
+		for(int i=0;i<numX;i++) {
+			tempConst+=f[i]*xValues[i];
+		}
+		
+		UB = Double.MAX_VALUE;
+		LB = zMaster+tempConst;
 
-		protected void main() throws IloException {
-			double zMaster = getValue(z);
-			double[] xValue = getValues(x);
-			//
-			// System.out.println("In master: z= "+zMaster);
-			// System.out.println("x= "+Arrays.toString(xValue));
+		while (UB - LB > tolerance) {
+			System.out.println("Now the upper bound= " + UB);
+			System.out.println("lower bound= " + LB);
+//			System.out.print("currentX= ");
+//			System.out.println(Arrays.toString(xValues));
+			System.out.println();
 
 			// set the supply constraint right-hand sides in the subproblem
 			for (int row = 0; row < numConstraint; row++) {
 				double temp = 0;
 				for (int i = 0; i < numX; i++) {
-					temp += B[row][i] * xValue[i];
+					temp += B[row][i] * xValues[i];
 				}
 				subConstraint[row].setLB(b[row] - temp);
 			}
 
-			// System.out.println("Now subproblem is "+sub.toString());
-
 			// solve the subproblem
+			System.out.println("||----Now solve the subProblem----||");
+			System.out.println();
+
 			sub.solve();
 			IloCplex.Status status = sub.getStatus();
 			IloNumExpr expr = master.numExpr();
@@ -231,182 +243,105 @@ public class Bender {
 				double[] coefficients = new double[numConstraint];
 				sub.dualFarkas(constraints, coefficients);
 
-				for (int row = 0; row < numConstraint; row++) {
-					IloConstraint c = subConstraint[row];
-					expr = master.sum(expr, master.prod(coefficients[row], rhs.get(c)));
-				}
+				///// ------------------------------------------------some problem about
+				///// rhs----------------------------/////
+				double mu[] = coefficients;
+				
+//				for (int row = 0; row < numConstraint; row++) {
+//					mu[rhs.get(constraints[row])] = coefficients[row];
+//				}
 
 				// add a feasibility cut
-				IloConstraint r = add(master.le(expr, 0));
-				System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-				// System.out.println("\n>>> Adding feasibility cut: " + "\n");
-			} else if (status == IloCplex.Status.Optimal) {
-				if (zMaster < sub.getObjValue() - FUZZ) {
-
-					// the master problem surrogate variable underestimates the actual
-					// flow cost -- add an optimality cut
-					double[] mu = sub.getDuals(subConstraint);
-
-					// System.out.println("mu= "+Arrays.toString(mu));
-
-					for (int row = 0; row < numConstraint; row++) {
-						expr = master.sum(expr, master.prod(mu[row], rhs.get(subConstraint[row])));
-					}
-
-					IloConstraint r = add((IloRange) master.ge(z, expr));
-					System.out.println("\n>>> Adding optimality cut: " + r + "\n");
-					// System.out.println("\n>>> Adding optimality cut: " + "\n");
-
-				} else {
-					System.out.println("\n>>> Accepting new incumbent with value " + getObjValue() + "\n");
-					yValues = sub.getValues(y);
+				double tempconst = 0;
+				for (int i = 0; i < numConstraint; i++) {
+					tempconst += mu[i] * b[i];
 				}
+				expr = master.sum(tempconst, expr);
 
-			} else {
-				// unexpected status -- report but do nothing
-				System.err.println("\n!!! Unexpected subproblem solution status: " + status + "\n");
-			}
-
-		}
-	}
-
-	public final void solve() throws IloException {
-		
-		master.solve();
-		zMaster=master.getValue(z);
-		xValues=master.getValues(x);
-		UB=Double.MAX_VALUE;
-		LB=zMaster;
-		
-		while(UB-LB>tolerance) {
-			System.out.println("Now the upper bound= "+UB);
-			System.out.println("lower bound= "+LB);
-			System.out.print("currentX= ");
-			System.out.println(Arrays.toString(xValues));
-			System.out.println();
-			
-			
-			// set the supply constraint right-hand sides in the subproblem
-			for (int row = 0; row < numConstraint; row++) {
-				double temp = 0;
 				for (int i = 0; i < numX; i++) {
-					temp += B[row][i] * xValues[i];
+					double para = 0;
+					for (int j = 0; j < numConstraint; j++) {
+						para += mu[j] * B[j][i];
+					}
+					para = -para;
+					expr = master.sum(expr, master.prod(para, x[i]));
 				}
-				subConstraint[row].setLB(b[row] - temp);
-			}
-			
-			
-			// solve the subproblem
-			System.out.println("||----Now solve the subProblem----||");
-			System.out.println();
-			
-			sub.solve();
-			IloCplex.Status status = sub.getStatus();
-			IloNumExpr expr = master.numExpr();
 
-						// System.out.println("The subproblem is "+status.toString());
-
-			if (status == IloCplex.Status.Infeasible) {
-							// subproblem is infeasible -- add a feasibility cut
-							// first step: get a Farkas certificate, corresponding to a dual ray
-							// along which the dual is unbounded
-
-		    IloConstraint[] constraints = new IloConstraint[numConstraint];
-			double[] coefficients = new double[numConstraint];
-			sub.dualFarkas(constraints, coefficients);
-			
-		
-			/////------------------------------------------------some problem about rhs----------------------------/////
-			double mu[]=new double[numConstraint];		
-			for(int row=0;row<numConstraint;row++) {
-				mu[rhs.get(subConstraint[row])]=coefficients[row];
-			}
-			
-			
-
-			// add a feasibility cut
-			double tempconst=0;
-			for(int i=0;i<numConstraint;i++) {
-				tempconst+=mu[i]*b[i];
-			}
-			expr=master.sum(tempconst,expr);
-			
-			for(int i=0;i<numX;i++) {
-				double para=0;
-				for(int j=0;j<numConstraint;j++) {
-					para+=mu[j]*B[j][i];
-				}
-				para=-para;
-				expr=master.sum(expr,master.prod(para, x[i]));
-			}
-			
-			
-			IloConstraint r = master.addGe(0, expr);
-			System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-//		    System.out.println("\n>>> Adding feasibility cut: " + "\n");
+				IloConstraint r = master.addGe(0, expr);
+				// System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
-				
-				if (sub.getObjValue()<UB) {
-					UB=sub.getObjValue();
-					yValues=sub.getValues(y);
+
+
+				if (sub.getObjValue()+tempConst < UB) {
+					UB = sub.getObjValue()+tempConst;
+					yValues = sub.getValues(y);
 					System.out.println("Find a  better solution, and updata UB!!!");
 					System.out.println();
 				}
 
 				// add an optimality cut
 				double[] mu = sub.getDuals(subConstraint);
-				
+				double tempconst = 0;
+				for (int i = 0; i < numConstraint; i++) {
+					tempconst += mu[i] * b[i];
+				}
+				expr = master.sum(tempconst, expr);
 
-
-								for (int row = 0; row < numConstraint; row++) {
-									expr = master.sum(expr, master.prod(mu[row], rhs.get(subConstraint[row])));
-								}
-
-								IloConstraint r = add((IloRange) master.ge(z, expr));
-								 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
-//								System.out.println("\n>>> Adding optimality cut: " + "\n");
-
-							} else {
-								System.out.println("\n>>> Accepting new incumbent with value " + getObjValue() + "\n");
-								yValues = sub.getValues(y);
-							}
-
-						} else {
-							// unexpected status -- report but do nothing
-							System.err.println("\n!!! Unexpected subproblem solution status: " + status + "\n");
-						}
-
+				for (int i = 0; i < numX; i++) {
+					double para = 0;
+					for (int j = 0; j < numConstraint; j++) {
+						para += mu[j] * B[j][i];
 					}
-			
-			
-			
+					para = -para;
+					expr = master.sum(expr, master.prod(para, x[i]));
+				}
+
+				IloConstraint r = master.addGe(z, expr);
+				// System.out.println("\n>>> Adding optimality cut: " + r + "\n");
+				System.out.println("\n>>> Adding optimality cut: " + "\n");
+
+			} else {
+				// unexpected status -- report but do nothing
+				System.err.println("\n!!! Unexpected subproblem solution status: " + status + "\n");
+			}
+
+			master.solve();
+			xValues = master.getValues(x);
+			tempConst=0;
+			for(int i=0;i<numX;i++) {
+				tempConst+=f[i]*xValues[i];
+			}
+//			LB = master.getValue(z)+tempConst;
+			LB = master.getObjValue();
+
 		}
 
-	if(master.solve())
+		if (master.solve())
 
-	{
-		System.out.println("optimal obj= " + master.getObjValue());
-		// double[] xValues = master.getValues(x);
-		// System.out.println("x= " + Arrays.toString(xValues));
-		// System.out.println("y= " + Arrays.toString(yValues));
-	}else
-	{
-		System.out.println("The last master's status is " + master.getStatus().toString());
-	}
+		{
+			System.out.println("optimal obj= " + master.getObjValue());
+			// double[] xValues = master.getValues(x);
+			// System.out.println("x= " + Arrays.toString(xValues));
+			// System.out.println("y= " + Arrays.toString(yValues));
+		} else {
+			System.out.println("The last master's status is " + master.getStatus().toString());
+		}
 	}
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-//		data.readData("temp.txt");
-//		System.out.println("Read data done!");
-		data.readData("out_small.txt");
+		 data.readData("./data/temp.txt");
+		// System.out.println("Read data done!");
+//		 data.readData("./data/out_small.txt");
+//		data.readData("./data/data1.txt");
 		data.graphTransfer();
-//		System.out.println("Graph transfer done!");
+		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();
-//		System.out.println("MatrixGenerator done!");
-		double tolerance=0;
+		// System.out.println("MatrixGenerator done!");
+		double tolerance = 0;
 
-		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data,tolerance);
+		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data, tolerance);
 		test.solve();
 	}
 
