@@ -790,65 +790,12 @@ public class Data {
 		return initialx;
 	}
 
-	// public double[] getc() {
-	// return c;
-	// }
-	//
-	// public double[] getf() {
-	// return f;
-	// }
-	//
-	// public double[] getbb() {
-	// return bb;
-	// }
-	//
-	// public double[][] getA() {
-	// return A;
-	// }
-	//
-	// public double[][] getB() {
-	// return B;
-	// }
-	//
-	// public int getNumOfx() {
-	// return numOfx;
-	// }
-	//
-	// public int getNumOfy() {
-	// return numOfy;
-	// }
-	//
-	// public int getNumOfTruck() {
-	// return numberOfTrucks;
-	// }
-	//
-	// public ArrayList<Edge> getEdgeSet() {
-	// return edgeSet;
-	// }
-	//
-	// public int getT() {
-	// return T;
-	// }
-	//
-	// public int getNumOfCity() {
-	// return numberOfCities;
-	// }
-	//
-	// public ArrayList<ArrayList<Integer>> getDistance() {
-	// return distance;
-	// }
-	//
-	// public ArrayList<ArrayList<Integer>> getDistanceReverse() {
-	// return distanceReverse;
-	// }
-	//
-	// public int[] getTruckStartNode() {
-	// return truckStartNode;
-	// }
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();
-		data.readData("out2.txt");
+//		data.readData("./data/out2.txt");
+//		data.readData("./data/data1.txt");
+		data.readData("./data/data2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 		// data.generateInitialx();

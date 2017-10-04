@@ -24,7 +24,7 @@ public class Bender {
 	int numX, numY, numConstraint;
 	double[] xValues, yValues; // subproblem y values ||master x values
 	IloRange[] subConstraint;
-//	 HashMap<IloConstraint, Integer> rhs; // here we use rhs to record the index
+	// HashMap<IloConstraint, Integer> rhs; // here we use rhs to record the index
 	// of constraints in sub
 	Data data;
 	double tolerance, UB, LB, zMaster;
@@ -52,7 +52,7 @@ public class Bender {
 		this.A = A;
 		this.B = B;
 
-//		 rhs = new HashMap<IloConstraint, Integer>();
+		// rhs = new HashMap<IloConstraint, Integer>();
 
 		// set up the master problem(which initially has no constraint)
 		master = new IloCplex();
@@ -96,7 +96,7 @@ public class Bender {
 			expr = sub.scalProd(A[row], y);
 			subConstraint[row] = sub.addGe(expr, 0, "subConstraint_" + row);
 			// rhs.put(subConstraint[row], master.diff(b[row], master.scalProd(B[row], x)));
-//			 rhs.put(subConstraint[row], row);
+			// rhs.put(subConstraint[row], row);
 		}
 
 		// System.out.println("initial subproblem is "+sub.toString());
@@ -125,7 +125,7 @@ public class Bender {
 		// master.addMinimize(master.scalProd(f, x), "Obj");
 
 		// constraints about road construction
-		// ---constraint 1-6---//
+		// ---constraint 1-4---//
 		for (int k = 0; k < data.numberOfTrucks; k++) {
 
 			// ---constraint 1---//
@@ -175,22 +175,22 @@ public class Bender {
 			}
 			master.addEq(0, constraint4);
 
-			// ---constraint 5---//
-			IloLinearNumExpr constraint5 = master.linearNumExpr();
-			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
-				Edge tempedge = data.edgeSet.get(edgeIndex);
-				if (tempedge.setIndex == 1) {
-					constraint5.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
-				}
-			}
-			master.addGe(data.legLimit, constraint5);
-
-			// ---constraint 6---//
-			IloLinearNumExpr constraint6 = master.linearNumExpr();
-			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
-				constraint6.addTerm(data.edgeSet.get(edgeIndex).length, x[k * data.edgeSet.size() + edgeIndex]);
-			}
-			master.addGe(data.distanceLimit, constraint6);
+//			// ---constraint 5---//
+//			IloLinearNumExpr constraint5 = master.linearNumExpr();
+//			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
+//				Edge tempedge = data.edgeSet.get(edgeIndex);
+//				if (tempedge.setIndex == 1) {
+//					constraint5.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
+//				}
+//			}
+//			master.addGe(data.legLimit, constraint5);
+//
+//			// ---constraint 6---//
+//			IloLinearNumExpr constraint6 = master.linearNumExpr();
+//			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
+//				constraint6.addTerm(data.edgeSet.get(edgeIndex).length, x[k * data.edgeSet.size() + edgeIndex]);
+//			}
+//			master.addGe(data.distanceLimit, constraint6);
 
 		}
 	}
@@ -199,20 +199,21 @@ public class Bender {
 		master.solve();
 		zMaster = master.getValue(z);
 		xValues = master.getValues(x);
-		
-		double tempConst=0;
-		for(int i=0;i<numX;i++) {
-			tempConst+=f[i]*xValues[i];
+
+		double tempConst = 0;
+		for (int i = 0; i < numX; i++) {
+			tempConst += f[i] * xValues[i];
 		}
-		
+
 		UB = Double.MAX_VALUE;
-		LB = zMaster+tempConst;
+		LB = zMaster + tempConst;
 
 		while (UB - LB > tolerance) {
+			
 			System.out.println("Now the upper bound= " + UB);
 			System.out.println("lower bound= " + LB);
-//			System.out.print("currentX= ");
-//			System.out.println(Arrays.toString(xValues));
+			// System.out.print("currentX= ");
+			// System.out.println(Arrays.toString(xValues));
 			System.out.println();
 
 			// set the supply constraint right-hand sides in the subproblem
@@ -246,10 +247,10 @@ public class Bender {
 				///// ------------------------------------------------some problem about
 				///// rhs----------------------------/////
 				double mu[] = coefficients;
-				
-//				for (int row = 0; row < numConstraint; row++) {
-//					mu[rhs.get(constraints[row])] = coefficients[row];
-//				}
+
+				// for (int row = 0; row < numConstraint; row++) {
+				// mu[rhs.get(constraints[row])] = coefficients[row];
+				// }
 
 				// add a feasibility cut
 				double tempconst = 0;
@@ -272,9 +273,8 @@ public class Bender {
 				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 
-
-				if (sub.getObjValue()+tempConst < UB) {
-					UB = sub.getObjValue()+tempConst;
+				if (sub.getObjValue() + tempConst + FUZZ < UB) {
+					UB = sub.getObjValue() + tempConst;
 					yValues = sub.getValues(y);
 					System.out.println("Find a  better solution, and updata UB!!!");
 					System.out.println();
@@ -308,18 +308,25 @@ public class Bender {
 
 			master.solve();
 			xValues = master.getValues(x);
-			tempConst=0;
-			for(int i=0;i<numX;i++) {
-				tempConst+=f[i]*xValues[i];
+			tempConst = 0;
+			for (int i = 0; i < numX; i++) {
+				tempConst += f[i] * xValues[i];
 			}
-//			LB = master.getValue(z)+tempConst;
+			// LB = master.getValue(z)+tempConst;
 			LB = master.getObjValue();
 
 		}
-
-		if (master.solve())
-
-		{
+		
+		System.out.println("Now the upper bound= " + UB);
+		System.out.println("lower bound= " + LB);
+		System.out.println();
+		
+		
+		
+		
+		
+//		System.out.println("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+		if (master.solve()) {
 			System.out.println("optimal obj= " + master.getObjValue());
 			// double[] xValues = master.getValues(x);
 			// System.out.println("x= " + Arrays.toString(xValues));
@@ -327,14 +334,21 @@ public class Bender {
 		} else {
 			System.out.println("The last master's status is " + master.getStatus().toString());
 		}
+		
+		
+		
+		
+		
+		
 	}
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		 data.readData("./data/temp.txt");
+//		 data.readData("./data/temp.txt");
 		// System.out.println("Read data done!");
 //		 data.readData("./data/out_small.txt");
 //		data.readData("./data/data1.txt");
+		data.readData("./data/data2.txt");
 		data.graphTransfer();
 		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();
@@ -342,7 +356,6 @@ public class Bender {
 		double tolerance = 0;
 
 		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data, tolerance);
-		test.solve();
 	}
 
 }

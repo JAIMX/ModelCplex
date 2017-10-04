@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
+import version2.Data.Edge;
+
 public class Data {
 
 	private class demandPair {
@@ -34,7 +36,7 @@ public class Data {
 	private double averageSpeed;
 	private double drivingTimePerDay;
 	private int[] truckCapacity;
-    private int[] truckStartNode;
+	private int[] truckStartNode;
 
 	private final int T = 36;
 	private int[][] b;
@@ -57,7 +59,7 @@ public class Data {
 	private ArrayList<Edge> edgeSet;
 	private ArrayList<ArrayList<Integer>> distance;
 	private ArrayList<ArrayList<Integer>> distanceReverse;
-	private int numOfEdge1, numOfEdge2, numOfEdge3,numOfEdge4;
+	private int numOfEdge1, numOfEdge2, numOfEdge3, numOfEdge4;
 	private int numOfEdge12, numOfy, numOfx, numOfconstraint;
 
 	private double[] c, f, bb;
@@ -454,23 +456,37 @@ public class Data {
 		for (int o = 0; o < numberOfCities; o++) {
 			int oIndex = numberOfCities * (T + 1) + o;
 
-			for (int node = 0; node < numberOfCities; node++) {
-				int nodeIndex = node * (T + 1);
-				Edge edge = new Edge();
-				edge.start = oIndex;
-				edge.end = nodeIndex;
-				edge.length = length[o][node];
-				edge.setIndex = 3;
-				edge.u = o;
-				edge.v = node;
-				edge.t1 = -1;
-				edge.t2 = 0;
-
-				edgeSet.add(edge);
-				distance.get(oIndex).add(edgeSet.size() - 1);
-				distanceReverse.get(edge.end).add(edgeSet.size() - 1);
-				connect[oIndex][nodeIndex] = true;
-			}
+			// for (int node = 0; node < numberOfCities; node++) {
+			// int nodeIndex = node * (T + 1);
+			// Edge edge = new Edge();
+			// edge.start = oIndex;
+			// edge.end = nodeIndex;
+			// edge.length = length[o][node];
+			// edge.setIndex = 3;
+			// edge.u = o;
+			// edge.v = node;
+			// edge.t1 = -1;
+			// edge.t2 = 0;
+			//
+			// edgeSet.add(edge);
+			// distance.get(oIndex).add(edgeSet.size() - 1);
+			// distanceReverse.get(edge.end).add(edgeSet.size() - 1);
+			// connect[oIndex][nodeIndex] = true;
+			// }
+			int nodeIndex = o * (T + 1);
+			Edge edge = new Edge();
+			edge.start = oIndex;
+			edge.end = nodeIndex;
+			edge.length = 0;
+			edge.setIndex = 3;
+			edge.u = o;
+			edge.v = o;
+			edge.t1 = -1;
+			edge.t2 = 0;
+			edgeSet.add(edge);
+			distance.get(oIndex).add(edgeSet.size() - 1);
+			connect[oIndex][nodeIndex] = true;
+			distanceReverse.get(edge.end).add(edgeSet.size() - 1);
 		}
 
 		numOfEdge3 = edgeSet.size() - numOfEdge1 - numOfEdge2;
@@ -478,23 +494,39 @@ public class Data {
 		// add AD:(nT,Dk)
 		for (int node = 0; node < numberOfCities; node++) {
 			int nodeIndex = node * (T + 1) + T;
-			for (int d = 0; d < numberOfCities; d++) {
-				int dIndex = numberOfCities * (T + 2) + d;
-				Edge edge = new Edge();
-				edge.start = nodeIndex;
-				edge.end = dIndex;
-				edge.length = length[node][d];
-				edge.setIndex = 4;
-				edge.u = node;
-				edge.v = d;
-				edge.t1 = T;
-				edge.t2 = -1;
-				edgeSet.add(edge);
-				distance.get(nodeIndex).add(edgeSet.size() - 1);
-				distanceReverse.get(dIndex).add(edgeSet.size() - 1);
-				connect[nodeIndex][dIndex] = true;
+			// for (int d = 0; d < numberOfCities; d++) {
+			// int dIndex = numberOfCities * (T + 2) + d;
+			// Edge edge = new Edge();
+			// edge.start = nodeIndex;
+			// edge.end = dIndex;
+			// edge.length = length[node][d];
+			// edge.setIndex = 4;
+			// edge.u = node;
+			// edge.v = d;
+			// edge.t1 = T;
+			// edge.t2 = -1;
+			// edgeSet.add(edge);
+			// distance.get(nodeIndex).add(edgeSet.size() - 1);
+			// distanceReverse.get(dIndex).add(edgeSet.size() - 1);
+			// connect[nodeIndex][dIndex] = true;
+			//
+			// }
 
-			}
+			int dIndex = numberOfCities * (T + 2) + node;
+			Edge edge = new Edge();
+			edge.end = dIndex;
+			edge.start = nodeIndex;
+			edge.length = 0;
+			edge.setIndex = 4;
+			edge.u = node;
+			edge.v = node;
+			edge.t1 = T;
+			edge.t2 = -2;
+			edgeSet.add(edge);
+			distance.get(nodeIndex).add(edgeSet.size() - 1);
+			distanceReverse.get(dIndex).add(edgeSet.size() - 1);
+			connect[nodeIndex][dIndex] = true;
+
 		}
 
 		numOfEdge4 = edgeSet.size() - numOfEdge1 - numOfEdge2 - numOfEdge3;
@@ -697,13 +729,13 @@ public class Data {
 			row++;
 		}
 
-//		for (int k = 0; k < numberOfTrucks; k++) {
-//
-//			for (int e = 0; e < edgeSet.size(); e++) {
-//				System.out.print(B[row - 2][k * edgeSet.size() + e] + " ");
-//			}
-//			System.out.println();
-//		}
+		// for (int k = 0; k < numberOfTrucks; k++) {
+		//
+		// for (int e = 0; e < edgeSet.size(); e++) {
+		// System.out.print(B[row - 2][k * edgeSet.size() + e] + " ");
+		// }
+		// System.out.println();
+		// }
 
 		System.out.println("The number of x= " + numOfx);
 		System.out.println("The number of y= " + numOfy);
@@ -786,34 +818,38 @@ public class Data {
 	public int getNumOfy() {
 		return numOfy;
 	}
+
 	public int getNumOfTruck() {
 		return numberOfTrucks;
 	}
-	
-	public ArrayList<Edge> getEdgeSet(){
+
+	public ArrayList<Edge> getEdgeSet() {
 		return edgeSet;
 	}
+
 	public int getT() {
 		return T;
 	}
+
 	public int getNumOfCity() {
 		return numberOfCities;
 	}
-	public ArrayList<ArrayList<Integer>> getDistance(){
+
+	public ArrayList<ArrayList<Integer>> getDistance() {
 		return distance;
 	}
-	public ArrayList<ArrayList<Integer>> getDistanceReverse(){
+
+	public ArrayList<ArrayList<Integer>> getDistanceReverse() {
 		return distanceReverse;
 	}
+
 	public int[] getTruckStartNode() {
 		return truckStartNode;
 	}
-	
-
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();
-		data.readData("out2.txt");
+		data.readData("./data/out2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 		data.generateInitialx();

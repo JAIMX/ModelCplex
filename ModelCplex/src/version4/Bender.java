@@ -204,13 +204,13 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		data.readData("temp.txt");
-//		System.out.println("Read data done!");
-//		data.readData("out_small.txt");
+//		data.readData("./data/out2.txt");
+//		data.readData("./data/data1.txt");
+//		data.readData("./data/data2.txt");
+		data.readData("./data/out_small.txt");
+		
 		data.graphTransfer();
-//		System.out.println("Graph transfer done!");
 		data.matrixGenerator();
-//		System.out.println("MatrixGenerator done!");
 
 		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data);
 		test.solve();

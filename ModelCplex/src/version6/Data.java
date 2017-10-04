@@ -1,4 +1,4 @@
-package version4;
+package version6;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -578,8 +578,7 @@ public class Data {
 		// System.out.println();
 		// }
 
-		numOfconstraint = numberOfCities * (T + 1) * numberOfDemandPair * 2 + numOfEdge1 + 7 * numberOfTrucks+2*numberOfTrucks*numberOfCities*(T+1);
-//		System.out.println("hhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+		numOfconstraint = numberOfCities * (T + 1) * numberOfDemandPair * 2 + numOfEdge1 + 2 * numberOfTrucks;
 		A = new double[numOfconstraint][numOfy];
 		B = new double[numOfconstraint][numOfx];
 		bb = new double[numOfconstraint];
@@ -587,111 +586,111 @@ public class Data {
 		int row = 0;
 		System.out.println("start to generate matrix!");
 		
-		///-----constraint 1------///
-		for(int k=0;k<numberOfTrucks;k++) {
-			for(int i=0;i<numberOfCities*(T+1);i++){
-				
-				for(int edgeIndex:distance.get(i)) {
-					B[row][k * edgeSet.size() + edgeIndex]=1;
-				}
-				
-				for(int edgeIndex:distanceReverse.get(i)) {
-					B[row][k * edgeSet.size() + edgeIndex]=-1;
-				}
-				
-				row++;
-				
-			}
-		}
-		
-		for(int k=0;k<numberOfTrucks;k++) {
-			for(int i=0;i<numberOfCities*(T+1);i++){
-				
-				for(int edgeIndex:distance.get(i)) {
-					B[row][k * edgeSet.size() + edgeIndex]=-1;
-				}
-				
-				for(int edgeIndex:distanceReverse.get(i)) {
-					B[row][k * edgeSet.size() + edgeIndex]=1;
-				}
-				
-				row++;
-				
-			}
-		}
-		
-		///-----constraint 2------///
-		for(int k=0;k<numberOfTrucks;k++) {
-			int ok=numberOfCities*(T+1)+truckStartNode[k];
-			
-			for(int edgeIndex:distance.get(ok)) {
-				B[row][k * edgeSet.size() + edgeIndex]=-1;
-			}
-			bb[row]=-1;
-			row++;
-		}
-		
-		
-		///-----constraint 3------///
-		for(int k=0;k<numberOfTrucks;k++) {
-			int ok=numberOfCities*(T+1)+truckStartNode[k];
-			
-			for(int ok2=numberOfCities*(T+1);ok2<numberOfCities*(T+2);ok2++) {
-				if(ok2!=ok) {
-					for(int edgeIndex:distance.get(ok2)) {
-						B[row][k * edgeSet.size() + edgeIndex]=1;
-					}
-				}
-			}
-			row++;
-		}
-		
-		for(int k=0;k<numberOfTrucks;k++) {
-			int ok=numberOfCities*(T+1)+truckStartNode[k];
-			
-			for(int ok2=numberOfCities*(T+1);ok2<numberOfCities*(T+2);ok2++) {
-				if(ok2!=ok) {
-					for(int edgeIndex:distance.get(ok2)) {
-						B[row][k * edgeSet.size() + edgeIndex]=-1;
-					}
-				}
-			}
-			row++;
-		}
-		
-		
-		///-----constraint 4------///
-		for(int k=0;k<numberOfTrucks;k++) {
-			int dk=numberOfCities*(T+2)+truckStartNode[k];
-			
-			for(int dk2=numberOfCities*(T+2);dk2<numberOfCities*(T+3);dk2++) {
-				if(dk2!=dk) {
-					for(int edgeIndex:distanceReverse.get(dk2)) {
-						B[row][k * edgeSet.size() + edgeIndex]=1;
-					}
-				}
-			}
-			row++;
-		}
-		
-		for(int k=0;k<numberOfTrucks;k++) {
-			int dk=numberOfCities*(T+2)+truckStartNode[k];
-			
-			for(int dk2=numberOfCities*(T+2);dk2<numberOfCities*(T+3);dk2++) {
-				if(dk2!=dk) {
-					for(int edgeIndex:distanceReverse.get(dk2)) {
-						B[row][k * edgeSet.size() + edgeIndex]=-1;
-					}
-				}
-			}
-			row++;
-		}
-		
-		
+//		///-----constraint 1------///
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			for(int i=0;i<numberOfCities*(T+1);i++){
+//				
+//				for(int edgeIndex:distance.get(i)) {
+//					B[row][k * edgeSet.size() + edgeIndex]=1;
+//				}
+//				
+//				for(int edgeIndex:distanceReverse.get(i)) {
+//					B[row][k * edgeSet.size() + edgeIndex]=-1;
+//				}
+//				
+//				row++;
+//				
+//			}
+//		}
+//		
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			for(int i=0;i<numberOfCities*(T+1);i++){
+//				
+//				for(int edgeIndex:distance.get(i)) {
+//					B[row][k * edgeSet.size() + edgeIndex]=-1;
+//				}
+//				
+//				for(int edgeIndex:distanceReverse.get(i)) {
+//					B[row][k * edgeSet.size() + edgeIndex]=1;
+//				}
+//				
+//				row++;
+//				
+//			}
+//		}
+//		
+//		///-----constraint 2------///
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			int ok=numberOfCities*(T+1)+truckStartNode[k];
+//			
+//			for(int edgeIndex:distance.get(ok)) {
+//				B[row][k * edgeSet.size() + edgeIndex]=-1;
+//			}
+//			bb[row]=-1;
+//			row++;
+//		}
+//		
+//		
+//		///-----constraint 3------///
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			int ok=numberOfCities*(T+1)+truckStartNode[k];
+//			
+//			for(int ok2=numberOfCities*(T+1);ok2<numberOfCities*(T+2);ok2++) {
+//				if(ok2!=ok) {
+//					for(int edgeIndex:distance.get(ok2)) {
+//						B[row][k * edgeSet.size() + edgeIndex]=1;
+//					}
+//				}
+//			}
+//			row++;
+//		}
+//		
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			int ok=numberOfCities*(T+1)+truckStartNode[k];
+//			
+//			for(int ok2=numberOfCities*(T+1);ok2<numberOfCities*(T+2);ok2++) {
+//				if(ok2!=ok) {
+//					for(int edgeIndex:distance.get(ok2)) {
+//						B[row][k * edgeSet.size() + edgeIndex]=-1;
+//					}
+//				}
+//			}
+//			row++;
+//		}
+//		
+//		
+//		///-----constraint 4------///
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			int dk=numberOfCities*(T+2)+truckStartNode[k];
+//			
+//			for(int dk2=numberOfCities*(T+2);dk2<numberOfCities*(T+3);dk2++) {
+//				if(dk2!=dk) {
+//					for(int edgeIndex:distanceReverse.get(dk2)) {
+//						B[row][k * edgeSet.size() + edgeIndex]=1;
+//					}
+//				}
+//			}
+//			row++;
+//		}
+//		
+//		for(int k=0;k<numberOfTrucks;k++) {
+//			int dk=numberOfCities*(T+2)+truckStartNode[k];
+//			
+//			for(int dk2=numberOfCities*(T+2);dk2<numberOfCities*(T+3);dk2++) {
+//				if(dk2!=dk) {
+//					for(int edgeIndex:distanceReverse.get(dk2)) {
+//						B[row][k * edgeSet.size() + edgeIndex]=-1;
+//					}
+//				}
+//			}
+//			row++;
+//		}
 		
 		
 		
 		
+		
+		///-----constraint 5-----///
 		for (int k = 0; k < numberOfTrucks; k++) {
 
 			for (int e = 0; e < edgeSet.size(); e++) {
@@ -705,6 +704,7 @@ public class Data {
 		}
 
 
+		///-----constraint 6-----///
 		for (int k = 0; k < numberOfTrucks; k++) {
 
 			for (int e = 0; e < edgeSet.size(); e++) {
@@ -715,6 +715,7 @@ public class Data {
 			row++;
 		}
 		
+		///-----constraint 7-----///
 		for (int p = 0; p < numberOfDemandPair; p++) {
 			for (int i = 0; i < numberOfCities * (T + 1); i++) {
 
@@ -769,6 +770,8 @@ public class Data {
 		// System.out.println();
 		// }
 
+		
+		///-----constraint 8------///
 		for (int p = 0; p < numberOfDemandPair; p++) {
 			for (int i = 0; i < numberOfCities * (T + 1); i++) {
 
@@ -890,12 +893,65 @@ public class Data {
 		return initialx;
 	}
 
+	// public double[] getc() {
+	// return c;
+	// }
+	//
+	// public double[] getf() {
+	// return f;
+	// }
+	//
+	// public double[] getbb() {
+	// return bb;
+	// }
+	//
+	// public double[][] getA() {
+	// return A;
+	// }
+	//
+	// public double[][] getB() {
+	// return B;
+	// }
+	//
+	// public int getNumOfx() {
+	// return numOfx;
+	// }
+	//
+	// public int getNumOfy() {
+	// return numOfy;
+	// }
+	//
+	// public int getNumOfTruck() {
+	// return numberOfTrucks;
+	// }
+	//
+	// public ArrayList<Edge> getEdgeSet() {
+	// return edgeSet;
+	// }
+	//
+	// public int getT() {
+	// return T;
+	// }
+	//
+	// public int getNumOfCity() {
+	// return numberOfCities;
+	// }
+	//
+	// public ArrayList<ArrayList<Integer>> getDistance() {
+	// return distance;
+	// }
+	//
+	// public ArrayList<ArrayList<Integer>> getDistanceReverse() {
+	// return distanceReverse;
+	// }
+	//
+	// public int[] getTruckStartNode() {
+	// return truckStartNode;
+	// }
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();
-//		data.readData("./data/out2.txt");
-//		data.readData("./data/data1.txt");
-		data.readData("./data/data2.txt");
+		data.readData("out2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 		// data.generateInitialx();

@@ -978,7 +978,7 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		data.readData("out2.txt");
+		data.readData("./data/out2.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 		data.generateInitialx();
