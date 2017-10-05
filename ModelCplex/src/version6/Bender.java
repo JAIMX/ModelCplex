@@ -17,8 +17,8 @@ public class Bender {
 	IloCplex master;
 	IloCplex sub;
 	IloNumVar[] y;
-	IloIntVar[] x;
-	IloNumVar z;
+//	IloIntVar[] x;
+//	IloNumVar z;
 	double[] c, f, b;
 	double[][] A, B;
 	int numX, numY, numConstraint;
@@ -28,8 +28,15 @@ public class Bender {
 	// of constraints in sub
 	Data data;
 	double tolerance, UB, LB, zMaster;
+	
+	//for master
+	ArrayList<double[]> feasibleCut, optimalCut;
+	double[] optPrice;
+	double[] feaPrice;
+	double[] truckPrice;
+	double[] initialX;
 
-	public Bender(double[] c, double[] f, double[] b, double[][] A, double[][] B, Data data, double tolerance)
+	public Bender(double[] c, double[] f, double[] b, double[][] A, double[][] B, Data data, double tolerance,double[] initialX)
 			throws IloException {
 		// System.out.println("c= "+Arrays.toString(c));
 		// System.out.println("f= "+Arrays.toString(f));
@@ -51,6 +58,8 @@ public class Bender {
 
 		this.A = A;
 		this.B = B;
+		
+		this.initialX=initialX;
 
 		// rhs = new HashMap<IloConstraint, Integer>();
 
@@ -58,9 +67,8 @@ public class Bender {
 		master = new IloCplex();
 		BuildMaster();
 		master.setOut(null);
-		// System.out.println("Initial master is "+master.toString());
-		// master.use(new BendersCallback());
 
+		
 		// set up the subproblem
 		sub = new IloCplex();
 		BuildSub();
@@ -110,95 +118,32 @@ public class Bender {
 	}
 
 	public void BuildMaster() throws IloException {
-		x = new IloIntVar[numX];
-		for (int k = 0; k < data.numberOfTrucks; k++) {
-			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
-				Edge tempedge = data.edgeSet.get(edgeIndex);
-				x[k * data.edgeSet.size() + edgeIndex] = master.intVar(0, 1,
-						"x" + tempedge.u + "," + tempedge.t1 + "," + tempedge.v + "," + tempedge.t2 + "," + k);
-			}
-		}
-
-		// x = master.intVarArray(numX, 0, 1);
-		z = master.numVar(Double.MIN_VALUE, Double.MAX_VALUE, "ArificialVar");
-		master.addMinimize(master.sum(z, master.scalProd(f, x)), "Obj");
-		// master.addMinimize(master.scalProd(f, x), "Obj");
-
-		// constraints about road construction
-		// ---constraint 1-4---//
-		for (int k = 0; k < data.numberOfTrucks; k++) {
-
-			// ---constraint 1---//
-			for (int i = 0; i < data.numberOfCities * (data.T + 1); i++) {
-				IloLinearNumExpr constraint1 = master.linearNumExpr();
-				for (int edgeIndex : data.distance.get(i)) {
-					constraint1.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
-				}
-
-				for (int edgeIndex : data.distanceReverse.get(i)) {
-					constraint1.addTerm(-1, x[k * data.edgeSet.size() + edgeIndex]);
-				}
-
-				master.addEq(0, constraint1);
-			}
-
-			// ---constraint 2---//
-			IloLinearNumExpr constraint2 = master.linearNumExpr();
-			int ok = data.numberOfCities * (data.T + 1) + data.truckStartNode[k];
-			for (int edgeIndex : data.distance.get(ok)) {
-				constraint2.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
-			}
-			master.addGe(1, constraint2);
-
-			// ---constraint 3---//
-			IloLinearNumExpr constraint3 = master.linearNumExpr();
-
-			for (int ok2 = data.numberOfCities * (data.T + 1); ok2 < data.numberOfCities * (data.T + 2); ok2++) {
-				if (ok2 != ok) {
-					for (int edgeIndex : data.distance.get(ok2)) {
-						constraint3.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
-					}
-				}
-			}
-			master.addEq(0, constraint3);
-
-			// ---constraint 4---//
-			IloLinearNumExpr constraint4 = master.linearNumExpr();
-			int dk = data.numberOfCities * (data.T + 2) + data.truckStartNode[k];
-
-			for (int dk2 = data.numberOfCities * (data.T + 2); dk2 < data.numberOfCities * (data.T + 3); dk2++) {
-				if (dk2 != dk) {
-					for (int edgeIndex : data.distanceReverse.get(dk2)) {
-						constraint4.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
-					}
-				}
-			}
-			master.addEq(0, constraint4);
-
-//			// ---constraint 5---//
-//			IloLinearNumExpr constraint5 = master.linearNumExpr();
+//		x = new IloIntVar[numX];
+//		for (int k = 0; k < data.numberOfTrucks; k++) {
 //			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
 //				Edge tempedge = data.edgeSet.get(edgeIndex);
-//				if (tempedge.setIndex == 1) {
-//					constraint5.addTerm(1, x[k * data.edgeSet.size() + edgeIndex]);
-//				}
+//				x[k * data.edgeSet.size() + edgeIndex] = master.intVar(0, 1,
+//						"x" + tempedge.u + "," + tempedge.t1 + "," + tempedge.v + "," + tempedge.t2 + "," + k);
 //			}
-//			master.addGe(data.legLimit, constraint5);
+//		}
 //
-//			// ---constraint 6---//
-//			IloLinearNumExpr constraint6 = master.linearNumExpr();
-//			for (int edgeIndex = 0; edgeIndex < data.edgeSet.size(); edgeIndex++) {
-//				constraint6.addTerm(data.edgeSet.get(edgeIndex).length, x[k * data.edgeSet.size() + edgeIndex]);
-//			}
-//			master.addGe(data.distanceLimit, constraint6);
+//		// x = master.intVarArray(numX, 0, 1);
+//		z = master.numVar(Double.MIN_VALUE, Double.MAX_VALUE, "ArificialVar");
+//		master.addMinimize(master.sum(z, master.scalProd(f, x)), "Obj");
+		
+		//record the parameter of constraints in master
+		feasibleCut = new ArrayList<double[]>();
+		optimalCut = new ArrayList<double[]>();
+		
 
-		}
 	}
 
 	public final void solve() throws IloException {
-		master.solve();
-		zMaster = master.getValue(z);
-		xValues = master.getValues(x);
+//		master.solve();
+//		zMaster = master.getValue(z);
+//		xValues = master.getValues(x);
+		
+		xValues=initialX;
 
 		double tempConst = 0;
 		for (int i = 0; i < numX; i++) {
@@ -206,7 +151,7 @@ public class Bender {
 		}
 
 		UB = Double.MAX_VALUE;
-		LB = zMaster + tempConst;
+		LB = Double.MIN_VALUE;
 
 		while (UB - LB > tolerance) {
 			
@@ -226,12 +171,12 @@ public class Bender {
 			}
 
 			// solve the subproblem
-			System.out.println("||----Now solve the subProblem----||");
-			System.out.println();
+//			System.out.println("||----Now solve the subProblem----||");
+//			System.out.println();
 
 			sub.solve();
 			IloCplex.Status status = sub.getStatus();
-			IloNumExpr expr = master.numExpr();
+//			IloNumExpr expr = master.numExpr();
 
 			// System.out.println("The subproblem is "+status.toString());
 
@@ -244,20 +189,15 @@ public class Bender {
 				double[] coefficients = new double[numConstraint];
 				sub.dualFarkas(constraints, coefficients);
 
-				///// ------------------------------------------------some problem about
-				///// rhs----------------------------/////
-				double mu[] = coefficients;
-
-				// for (int row = 0; row < numConstraint; row++) {
-				// mu[rhs.get(constraints[row])] = coefficients[row];
-				// }
+				double[] mu = coefficients;
+				double[] tempFeaCut=new double[numX+1];
 
 				// add a feasibility cut
-				double tempconst = 0;
+				double temp = 0;
 				for (int i = 0; i < numConstraint; i++) {
-					tempconst += mu[i] * b[i];
+					temp += mu[i] * b[i];
 				}
-				expr = master.sum(tempconst, expr);
+				tempFeaCut[numX]=temp;
 
 				for (int i = 0; i < numX; i++) {
 					double para = 0;
@@ -265,10 +205,13 @@ public class Bender {
 						para += mu[j] * B[j][i];
 					}
 					para = -para;
-					expr = master.sum(expr, master.prod(para, x[i]));
+					
+					tempFeaCut[i]=para;
+//					expr = master.sum(expr, master.prod(para, x[i]));
 				}
 
-				IloConstraint r = master.addGe(0, expr);
+				feasibleCut.add(tempFeaCut);
+//				IloConstraint r = master.addGe(0, expr);
 				// System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
 				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
@@ -282,11 +225,13 @@ public class Bender {
 
 				// add an optimality cut
 				double[] mu = sub.getDuals(subConstraint);
-				double tempconst = 0;
+				double[] tempOptCut=new double[numX+1];
+				
+				double temp = 0;
 				for (int i = 0; i < numConstraint; i++) {
-					tempconst += mu[i] * b[i];
+					temp += mu[i] * b[i];
 				}
-				expr = master.sum(tempconst, expr);
+				tempOptCut[numX]=temp;
 
 				for (int i = 0; i < numX; i++) {
 					double para = 0;
@@ -294,10 +239,14 @@ public class Bender {
 						para += mu[j] * B[j][i];
 					}
 					para = -para;
-					expr = master.sum(expr, master.prod(para, x[i]));
+					
+					tempOptCut[i]=para;
+//					expr = master.sum(expr, master.prod(para, x[i]));
 				}
 
-				IloConstraint r = master.addGe(z, expr);
+				optimalCut.add(tempOptCut);
+
+//				IloConstraint r = master.addGe(z, expr);
 				// System.out.println("\n>>> Adding optimality cut: " + r + "\n");
 				System.out.println("\n>>> Adding optimality cut: " + "\n");
 
@@ -306,8 +255,8 @@ public class Bender {
 				System.err.println("\n!!! Unexpected subproblem solution status: " + status + "\n");
 			}
 
-			master.solve();
-			xValues = master.getValues(x);
+			xValues=BMP();
+//			xValues = master.getValues(x);
 			tempConst = 0;
 			for (int i = 0; i < numX; i++) {
 				tempConst += f[i] * xValues[i];
@@ -325,7 +274,6 @@ public class Bender {
 		
 		
 		
-//		System.out.println("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
 		if (master.solve()) {
 			System.out.println("optimal obj= " + master.getObjValue());
 			// double[] xValues = master.getValues(x);
@@ -346,16 +294,16 @@ public class Bender {
 		Data data = new Data();
 //		 data.readData("./data/temp.txt");
 		// System.out.println("Read data done!");
-		 data.readData("./data/out_small.txt");
+//		 data.readData("./data/out_small.txt");
 //		data.readData("./data/data1.txt");
-//		data.readData("./data/data2.txt");
+		data.readData("./data/data2.txt");
 		data.graphTransfer();
 		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();
 		// System.out.println("MatrixGenerator done!");
 		double tolerance = 0;
 
-		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data, tolerance);
+		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data, tolerance,data.generateInitialx());
 	}
 
 }
