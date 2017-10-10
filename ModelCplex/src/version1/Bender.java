@@ -220,7 +220,7 @@ public class Bender {
 						for (int mul = 0; mul < numOfConstraint; mul++) {
 							tempc[i] += u[mul] * B[mul][i];
 						}
-						tempc[i] = tempc[i] - f[i];
+//						tempc[i] = tempc[i] - f[i];
 					}
 
 					for (int mul = 0; mul < numOfConstraint; mul++) {
@@ -269,6 +269,7 @@ public class Bender {
 					for (int mul = 0; mul < numOfConstraint; mul++) {
 						tempc[i] += u[mul] * B[mul][i];
 					}
+					tempc[i] = tempc[i] - f[i];
 				}
 
 				for (int mul = 0; mul < numOfConstraint; mul++) {
@@ -978,7 +979,8 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		data.readData("./data/out2.txt");
+//		data.readData("./data/out2.txt");
+		data.readData("./data/out_small.txt");
 		data.graphTransfer();
 		data.matrixGenerator();
 		data.generateInitialx();
