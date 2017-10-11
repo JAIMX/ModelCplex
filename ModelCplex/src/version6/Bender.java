@@ -347,7 +347,7 @@ public class Bender {
 	public void BMP() throws IloException {
 
 		double masterUB = Double.MAX_VALUE;
-		double masterLB = Double.MIN_VALUE;
+//		double masterLB = Double.MIN_VALUE;
 		double[] optSolution = new double[numX];
 		double[] tempSolution = new double[numX];
 		optSolution[0] = -1;
@@ -457,8 +457,12 @@ public class Bender {
 		root.ifAddCol = false;
 		stack.add(root);
 
+//		int checkcount=0;
 		// start DFS
 		while (stack.size() > 0) {
+////			master.exportModel("./checkModel/stack"+checkcount+".lp");
+//			master.exportModel("stack"+checkcount+".lp");
+//			checkcount++;
 			System.out.println("Now stack.size= " + stack.size());
 //			System.out.println("Now the master model is " + master.toString());
 			System.out.println();
@@ -571,29 +575,29 @@ public class Bender {
 					int truckStartIndex = 0;
 					for (;;) {
 
-						master.exportModel("tempMaster.lp");
-						System.out.println("tempMaster's outcome:");
-						System.out.println("objective= "+master.getObjValue());
-						System.out.println("z= "+Arrays.toString(master.getValues(z)));
-						
-						for (int pathIndex = 0; pathIndex < pathSet.size(); pathIndex++) {
-							Path path = pathSet.get(pathIndex);
-							if (path.ifInModel == true ) {
-								System.out.println("path #"+pathIndex+"= "+master.getValue(path.column));
-							}
-						}
+//						master.exportModel("tempMaster.lp");
+//						System.out.println("tempMaster's outcome:");
+//						System.out.println("objective= "+master.getObjValue());
+//						System.out.println("z= "+Arrays.toString(master.getValues(z)));
+//						
+//						for (int pathIndex = 0; pathIndex < pathSet.size(); pathIndex++) {
+//							Path path = pathSet.get(pathIndex);
+//							if (path.ifInModel == true ) {
+//								System.out.println("path #"+pathIndex+"= "+master.getValue(path.column));
+//							}
+//						}
 						
 						/// FIND AND ADD A NEW SHORTEST PATH///
 						optPrice = master.getDuals(optConstraint);
 						feaPrice = master.getDuals(feaConstraint);
 						truckPrice = master.getDuals(truckConstraint);
 
-						System.out.print("optPrice= ");
-						System.out.println(Arrays.toString(optPrice));
-						System.out.print("feaPrice= ");
-						System.out.println(Arrays.toString(feaPrice));
-						System.out.print("truckPrice= ");
-						System.out.println(Arrays.toString(truckPrice));
+//						System.out.print("optPrice= ");
+//						System.out.println(Arrays.toString(optPrice));
+//						System.out.print("feaPrice= ");
+//						System.out.println(Arrays.toString(feaPrice));
+//						System.out.print("truckPrice= ");
+//						System.out.println(Arrays.toString(truckPrice));
 
 						// if all of k trucks don't have negative reduced cost, then check=false
 						check = false;
@@ -788,16 +792,16 @@ public class Bender {
 								System.out.println(
 										"We add #" + count + " path to this node, and the path belong to truck " + k);
 								
-								System.out.println("Now the master problem is "+master.toString());
+//								System.out.println("Now the master problem is "+master.toString());
 
 								/// --------------------------------------------------check shortest path
 								/// problem-----------------///
 								// if(count==1) {
-								for (int edgeIndex : edgeIndexSet) {
-									Edge temp = edgeSet.get(edgeIndex);
-									System.out.println("start= " + temp.start + " at time " + temp.t1 + "     end= "
-											+ temp.end + " at time " + temp.t2);
-								}
+//								for (int edgeIndex : edgeIndexSet) {
+//									Edge temp = edgeSet.get(edgeIndex);
+//									System.out.println("start= " + temp.start + " at time " + temp.t1 + "     end= "
+//											+ temp.end + " at time " + temp.t2);
+//								}
 								// }
 
 								/// ----------------------------check
@@ -815,7 +819,7 @@ public class Bender {
 						// check if all artificial vars are 0
 						ifAllZero = true;
 						for (int i = 1; i < numOfTruck + 2; i++) {
-							System.out.print(master.getValue(z[i]) + " ");
+//							System.out.print(master.getValue(z[i]) + " ");
 							// System.out.println("Now i= " + i + " " + BMP.getValue(z[i]));
 							if (Math.abs(master.getValue(z[i])) > FUZZ) {
 
@@ -825,7 +829,7 @@ public class Bender {
 						}
 
 						if (!check || (count > 1000 && ifAllZero)) {
-							master.exportModel("master.lp");
+//							master.exportModel("master.lp");
 							break;
 						}
 
@@ -925,6 +929,7 @@ public class Bender {
 						if (master.getObjValue() < masterUB) {
 							System.out.println("And the masterUB is updated");
 							masterUB = master.getObjValue();
+							LB=masterUB;
 							System.arraycopy(tempSolution, 0, optSolution, 0, numX);
 						}
 
@@ -938,7 +943,7 @@ public class Bender {
 				currentNode = stack.pop();
 				System.out.println("We should extract current node.");
 
-				if (currentNode.branchTruck > 0) {
+				if (currentNode.branchTruck >=0) {
 
 					// deal with extractCol,addCol
 					for (Path path : currentNode.addCol) {
@@ -979,7 +984,7 @@ public class Bender {
 				System.out.println(getName(i)+"="+xValues[i]);
 			}
 		}
-		LB = master.getObjValue();
+//		LB = master.getObjValue();
 
 		// if (Math.abs(optSolution[0]+1)<FUZZ) {
 		// return Double.MIN_VALUE/10;
@@ -1007,11 +1012,11 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		// data.readData("./data/temp.txt");
+//		 data.readData("./data/temp.txt");
 		// System.out.println("Read data done!");
-		data.readData("./data/out_small.txt");
+//		data.readData("./data/out_small.txt");
 		// data.readData("./data/data1.txt");
-		// data.readData("./data/data2.txt");
+		 data.readData("./data/data2.txt");
 		data.graphTransfer();
 		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();

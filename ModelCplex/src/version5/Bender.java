@@ -282,8 +282,8 @@ public class Bender {
 				}
 
 				IloConstraint r = master.addGe(0, expr);
-				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
-//				System.out.println("\n>>> Adding feasibility cut: " + "\n");
+//				 System.out.println("\n>>> Adding feasibility cut: " + r + "\n");
+				System.out.println("\n>>> Adding feasibility cut: " + "\n");
 			} else if (status == IloCplex.Status.Optimal) {
 
 				if (sub.getObjValue() + tempConst + FUZZ < UB) {
@@ -312,8 +312,8 @@ public class Bender {
 				}
 
 				IloConstraint r = master.addGe(z, expr);
-				 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
-//				System.out.println("\n>>> Adding optimality cut: " + "\n");
+//				 System.out.println("\n>>> Adding optimality cut: " + r + "\n");
+				System.out.println("\n>>> Adding optimality cut: " + "\n");
 
 			} else {
 				// unexpected status -- report but do nothing
@@ -322,12 +322,12 @@ public class Bender {
 
 			master.solve();
 			xValues = master.getValues(x);
-			for(int i=0;i<numX;i++) {
-				if(xValues[i]>0) {
-					
-					System.out.println(getName(i)+"="+xValues[i]);
-				}
-			}
+//			for(int i=0;i<numX;i++) {
+//				if(xValues[i]>0) {
+//					
+//					System.out.println(getName(i)+"="+xValues[i]);
+//				}
+//			}
 			
 			tempConst = 0;
 			for (int i = 0; i < numX; i++) {
@@ -367,9 +367,9 @@ public class Bender {
 		Data data = new Data();
 //		 data.readData("./data/temp.txt");
 		// System.out.println("Read data done!");
-		 data.readData("./data/out_small.txt");
+//		 data.readData("./data/out_small.txt");
 //		data.readData("./data/data1.txt");
-//		data.readData("./data/data2.txt");
+		data.readData("./data/data2.txt");
 		data.graphTransfer();
 		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();
