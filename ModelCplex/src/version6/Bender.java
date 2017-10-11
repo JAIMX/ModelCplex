@@ -505,7 +505,8 @@ public class Bender {
 											// extract currentPath in the model, and record on
 											// currentNode.extractCol,change currentPath.ifinmodel
 											currentNode.extractCol.add(currentPath);
-											master.remove(currentPath.column);
+											master.delete(currentPath.column);
+											master.exportModel("tempMaster2.lp");
 											currentPath.ifInModel = false;
 											break;
 										}
@@ -524,7 +525,7 @@ public class Bender {
 										// extract currentPath in the model, and record on currentNode.extractCol,change
 										// currentPath.ifinmodel
 										currentNode.extractCol.add(currentPath);
-										master.remove(currentPath.column);
+										master.delete(currentPath.column);
 										currentPath.ifInModel = false;
 										break;
 									}
@@ -638,7 +639,7 @@ public class Bender {
 							int nextCoverTime = -1;
 							int nextStartPoint = -1;
 							for (int time = nextCoverTime + 1; time <= T; time++) {
-								if (cover[k][time] > 0) {
+								if (cover[k][time] >= 0) {
 									nextCoverTime = time;
 									nextStartPoint = edgeSet.get(cover[k][time]).start;
 									break;
@@ -941,7 +942,7 @@ public class Bender {
 
 					// deal with extractCol,addCol
 					for (Path path : currentNode.addCol) {
-						master.remove(path.column);
+						master.delete(path.column);
 						path.ifInModel = false;
 
 					}
