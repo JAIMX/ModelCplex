@@ -893,61 +893,12 @@ public class Data {
 		return initialx;
 	}
 
-	// public double[] getc() {
-	// return c;
-	// }
-	//
-	// public double[] getf() {
-	// return f;
-	// }
-	//
-	// public double[] getbb() {
-	// return bb;
-	// }
-	//
-	// public double[][] getA() {
-	// return A;
-	// }
-	//
-	// public double[][] getB() {
-	// return B;
-	// }
-	//
-	// public int getNumOfx() {
-	// return numOfx;
-	// }
-	//
-	// public int getNumOfy() {
-	// return numOfy;
-	// }
-	//
-	// public int getNumOfTruck() {
-	// return numberOfTrucks;
-	// }
-	//
-	// public ArrayList<Edge> getEdgeSet() {
-	// return edgeSet;
-	// }
-	//
-	// public int getT() {
-	// return T;
-	// }
-	//
-	// public int getNumOfCity() {
-	// return numberOfCities;
-	// }
-	//
-	// public ArrayList<ArrayList<Integer>> getDistance() {
-	// return distance;
-	// }
-	//
-	// public ArrayList<ArrayList<Integer>> getDistanceReverse() {
-	// return distanceReverse;
-	// }
-	//
-	// public int[] getTruckStartNode() {
-	// return truckStartNode;
-	// }
+	public void outputEdgeSet(){
+	    for(int edgeIndex=0;edgeIndex<edgeSet.size();edgeIndex++){
+	        Edge edge=edgeSet.get(edgeIndex);
+	        System.out.println("edge #"+edgeIndex+": "+edge.start+"->"+edge.end);
+	    }
+	}
 
 	public static void main(String[] args) throws IOException {
 		Data data = new Data();
