@@ -370,7 +370,8 @@ public class Bender {
 //		 data.readData("./data/out_small.txt");
 //		data.readData("./data/data1.txt");
 //		data.readData("./data/data2.txt");
-		data.readData("./data/out_small2.txt");
+//		data.readData("./data/out_small2.txt");
+		data.readData("./data/out_small3.txt");
 		data.graphTransfer();
 		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();
