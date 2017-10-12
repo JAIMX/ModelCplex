@@ -515,17 +515,17 @@ public class Bender {
 				master.solve();
 				int truckStartIndex = 0;
 				for (;;) {
-//					 master.exportModel("tempMaster.lp");
-//					 System.out.println("tempMaster's outcome:");
-//					 System.out.println("objective= "+master.getObjValue());
-//					 System.out.println("z= "+Arrays.toString(master.getValues(z)));
-//					
-//					 for (int pathIndex = 0; pathIndex < pathSet.size(); pathIndex++) {
-//					 Path path = pathSet.get(pathIndex);
-//					 if (path.ifInModel == true ) {
-//					 System.out.println("path #"+pathIndex+"= "+master.getValue(path.column));
-//					 }
-//					 }
+                    master.exportModel("tempMaster.lp");
+                    System.out.println("tempMaster's outcome:");
+                    System.out.println("objective= " + master.getObjValue());
+                    System.out.println("z= " + Arrays.toString(master.getValues(z)));
+
+                    for (int pathIndex = 0; pathIndex < pathSet.size(); pathIndex++) {
+                        Path path = pathSet.get(pathIndex);
+                        if (path.ifInModel == true) {
+                            System.out.println("path #" + pathIndex + "= " + master.getValue(path.column));
+                        }
+                    }
 
 					/// FIND AND ADD A NEW SHORTEST PATH///
 					optPrice = master.getDuals(optConstraint);
@@ -540,7 +540,7 @@ public class Bender {
 					 System.out.println(Arrays.toString(truckPrice));
 
 					// if all of k trucks don't have negative reduced cost, then check=false
-					check = false;
+                                                                                                                                                               					check = false;
 					double totalPathCost = Double.MAX_VALUE;
 					int lastEdgeIndex = -1;
 
@@ -548,6 +548,8 @@ public class Bender {
 						int k = (truckStartIndex + kk) % numOfTruck;
 
 						double[] dpFunction = new double[numOfCity * (T + 1)];
+						
+						totalPathCost = Double.MAX_VALUE;
 						int[] pathRecord = new int[numOfCity * (T + 1)];
 						for (int i = 0; i < dpFunction.length; i++) {
 							dpFunction[i] = Double.MAX_VALUE;
@@ -555,7 +557,7 @@ public class Bender {
 
 						int startNode = numOfCity * (T + 1) + data.truckStartNode[k];
 						// original node
-						if (cover[k][T + 1] > 0) {
+						if (cover[k][T + 1] >= 0) {
 							int edgeIndex = cover[k][T + 1];
 							int pointTo = edgeSet.get(edgeIndex).end;
 							pathRecord[pointTo] = edgeIndex;
@@ -650,7 +652,7 @@ public class Bender {
 						}
 
 						// destination
-						if (cover[k][T] > 0) {
+						if (cover[k][T] >= 0) {
 							int edgeIndex = cover[k][T];
 							Edge edge = edgeSet.get(edgeIndex);
 							double cost = calculateCost(edgeIndex, k);
@@ -659,8 +661,9 @@ public class Bender {
 							lastEdgeIndex = edgeIndex;
 
 						} else {
-							for (int node = 0; node < numOfCity; node++) {
-								int nodeIndex = node * (T + 1) + T;
+//							for (int node = 0; node < numOfCity; node++) {
+//								int nodeIndex = node * (T + 1) + T;
+						    int nodeIndex = data.truckStartNode[k] * (T + 1) + T;
 								if (dpFunction[nodeIndex] < Double.MAX_VALUE / 100000) {
 									for (int edgeIndex : distance.get(nodeIndex)) {
 										if (edgeSet.get(edgeIndex).end == numOfCity * (T + 2)
@@ -674,7 +677,7 @@ public class Bender {
 										}
 									}
 								}
-							}
+//							}
 						}
 
 						// check shortest path's reduced cost
@@ -726,6 +729,8 @@ public class Bender {
 							newPath.ifInModel = true;
 							newPath.edgeIndexSet = edgeIndexSet;
 							pathSet.add(newPath);
+							
+							currentNode.addCol.add(newPath);
 							check = true;
 							count++;
 							System.out.println(
@@ -735,11 +740,13 @@ public class Bender {
 
 							/// --------------------------------------------------check shortest path
 							/// problem-----------------///
-//							for (int edgeIndex : edgeIndexSet) {
-//								Edge temp = edgeSet.get(edgeIndex);
-//								System.out.println("start= " + temp.start + " at time " + temp.t1 + "     end= "
-//										+ temp.end + " at time " + temp.t2);
-//							}
+							for (int edgeIndex : edgeIndexSet) {
+								Edge temp = edgeSet.get(edgeIndex);
+								System.out.println("start= " + temp.start + " at time " + temp.t1 + "     end= "
+										+ temp.end + " at time " + temp.t2);
+							}
+							
+							System.out.println("total cost= "+totalPathCost);
 
 							/// ----------------------------check
 							/// end--------------------------------------------------------///
@@ -818,9 +825,13 @@ public class Bender {
 								System.out.println("Not all varibles are integral");
 
 								if (!check && ifAllZero) {
-									if (master.getObjValue() > masterUB) {
-										break;
-									}
+								    double temp=master.getObjValue();
+//									if (master.getObjValue() > masterUB) {
+//										break;
+//									}
+								    if(temp-masterUB>-FUZZ){
+								        break;
+								    }
 								}
 
 								Node node1 = new Node();
@@ -871,7 +882,7 @@ public class Bender {
 
 						// currentNode.ifAddCol = true;
 						System.out.println("We find a new feasible solution.");
-						if (master.getObjValue() < masterUB) {
+						if (master.getObjValue() +FUZZ< masterUB) {
 							masterUB = master.getObjValue();
 							System.out.println("And the masterUB is updated, masterUB= "+masterUB);
 							System.arraycopy(tempSolution, 0, optSolution, 0, numX);
@@ -894,12 +905,16 @@ public class Bender {
 						path.ifInModel = false;
 
 					}
+					
+					master.exportModel("tempMaster.lp");
 
 					System.out.println(currentNode.extractCol.size());
 					for (Path path : currentNode.extractCol) {
 						master.add(path.column);
 						path.ifInModel = true;
 					}
+					
+					master.exportModel("tempMaster.lp");
 
 					// deal with cover and notCover
 					if (currentNode.ifCover == false) {
@@ -951,13 +966,13 @@ public class Bender {
 		Data data = new Data();
 		// data.readData("./data/temp.txt");
 		// System.out.println("Read data done!");
-		data.readData("./data/out_small.txt");
-		// data.readData("./data/data1.txt");
+//		data.readData("./data/out_small.txt");
+		data.readData("./data/out_small2.txt");
+//		 data.readData("./data/data1.txt");
 		// data.readData("./data/data2.txt");
 		data.graphTransfer();
-		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();
-		// System.out.println("MatrixGenerator done!");
+		data.outputEdgeSet();
 		double tolerance = 0;
 
 		Bender test = new Bender(data.c, data.f, data.bb, data.A, data.B, data, tolerance, data.generateInitialx());
