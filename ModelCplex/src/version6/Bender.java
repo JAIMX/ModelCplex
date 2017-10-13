@@ -1014,9 +1014,10 @@ public class Bender {
 		Data data = new Data();
 //		 data.readData("./data/temp.txt");
 		// System.out.println("Read data done!");
-		data.readData("./data/out_small.txt");
+//		data.readData("./data/out_small.txt");
 		// data.readData("./data/data1.txt");
 //		 data.readData("./data/data2.txt");
+		data.readData("./data/out_small.txt");
 		data.graphTransfer();
 		// System.out.println("Graph transfer done!");
 		data.matrixGenerator();

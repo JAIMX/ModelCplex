@@ -1,6 +1,7 @@
 /**
- * correct benders+branch and price
+ * benders+branch and price
  * class data is same with version2
+ * have bugs on bound
  */
 /**
  * @author Helen

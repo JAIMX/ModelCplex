@@ -436,7 +436,7 @@ public class Bender {
 
         // start DFS
         while (stack.size() > 0) {
-//            System.out.println("Now stack.size= " + stack.size());
+            // System.out.println("Now stack.size= " + stack.size());
 
             Node currentNode = stack.peek();
 
@@ -469,29 +469,54 @@ public class Bender {
                     // acoording to the branch");
                     // extract column
                     if (currentNode.ifCover == true) { // Xak=1
+                        // for (int i = 0; i < pathSet.size(); i++) {
+                        // Path currentPath = pathSet.get(i);
+                        //
+                        // if (currentPath.ifInModel == true &&
+                        // currentPath.truckIndex == currentNode.branchTruck) {
+                        // for (int edgeIndex : currentPath.edgeIndexSet) {
+                        // if (edgeIndex != currentNode.branchEdge) {
+                        // int start =
+                        // data.edgeSet.get(currentNode.branchEdge).start;
+                        // int end =
+                        // data.edgeSet.get(currentNode.branchEdge).end;
+                        //
+                        // if (data.edgeSet.get(edgeIndex).start == start
+                        // || data.edgeSet.get(edgeIndex).end == end) {
+                        // // extract currentPath in the model,
+                        // // and record on
+                        // // currentNode.extractCol,change
+                        // // currentPath.ifinmodel
+                        // currentNode.extractCol.add(currentPath);
+                        // master.delete(currentPath.column);
+                        // master.exportModel("tempMaster2.lp");
+                        // currentPath.ifInModel = false;
+                        // break;
+                        // }
+                        // }
+                        // }
+                        // }
+                        // }
+
                         for (int i = 0; i < pathSet.size(); i++) {
                             Path currentPath = pathSet.get(i);
-
                             if (currentPath.ifInModel == true && currentPath.truckIndex == currentNode.branchTruck) {
+                                boolean check = false;
                                 for (int edgeIndex : currentPath.edgeIndexSet) {
-                                    if (edgeIndex != currentNode.branchEdge) {
-                                        int start = data.edgeSet.get(currentNode.branchEdge).start;
-                                        int end = data.edgeSet.get(currentNode.branchEdge).end;
-
-                                        if (data.edgeSet.get(edgeIndex).start == start
-                                                || data.edgeSet.get(edgeIndex).end == end) {
-                                            // extract currentPath in the model,
-                                            // and record on
-                                            // currentNode.extractCol,change
-                                            // currentPath.ifinmodel
-                                            currentNode.extractCol.add(currentPath);
-                                            master.delete(currentPath.column);
-                                            master.exportModel("tempMaster2.lp");
-                                            currentPath.ifInModel = false;
-                                            break;
-                                        }
+                                    if (edgeIndex == currentNode.branchEdge) {
+                                        check = true;
+                                        break;
                                     }
                                 }
+
+                                if (!check) { // don't have this branch edge, so
+                                              // extract this path in master
+                                    currentNode.extractCol.add(currentPath);
+                                    master.delete(currentPath.column);
+                                    currentPath.ifInModel = false;
+//                                    break;
+                                }
+
                             }
                         }
                     } else { // Xak=0
@@ -772,14 +797,16 @@ public class Bender {
                             /// --------------------------------------------------check
                             /// shortest path
                             /// problem-----------------///
-//                            for (int edgeIndex : edgeIndexSet) {
-//                                Edge temp = edgeSet.get(edgeIndex);
-//                                System.out.println("start= " + temp.start + " at time " + temp.t1 + "     end= "
-//                                        + temp.end + " at time " + temp.t2);
-//                            }
-//
-//                            System.out.println("total cost= " + totalPathCost);
-//                            System.out.println("price k= "+pik);
+                            // for (int edgeIndex : edgeIndexSet) {
+                            // Edge temp = edgeSet.get(edgeIndex);
+                            // System.out.println("start= " + temp.start + " at
+                            // time " + temp.t1 + " end= "
+                            // + temp.end + " at time " + temp.t2);
+                            // }
+                            //
+                            // System.out.println("total cost= " +
+                            // totalPathCost);
+                            // System.out.println("price k= "+pik);
 
                             /// ----------------------------check
                             /// end--------------------------------------------------------///
@@ -943,7 +970,7 @@ public class Bender {
 
                     }
 
-                    master.exportModel("tempMaster.lp");
+//                    master.exportModel("tempMaster.lp");
 
                     // System.out.println(currentNode.extractCol.size());
                     for (Path path : currentNode.extractCol) {
@@ -951,7 +978,7 @@ public class Bender {
                         path.ifInModel = true;
                     }
 
-                    master.exportModel("tempMaster.lp");
+//                    master.exportModel("tempMaster.lp");
 
                     // deal with cover and notCover
                     if (currentNode.ifCover == false) {
@@ -1003,8 +1030,8 @@ public class Bender {
         Data data = new Data();
         // data.readData("./data/temp.txt");
         // System.out.println("Read data done!");
-        // data.readData("./data/out_small.txt");
-        // data.readData("./data/out_small2.txt");
+//         data.readData("./data/out_small.txt");
+//         data.readData("./data/out_small2.txt");
         // data.readData("./data/data1.txt");
         // data.readData("./data/data2.txt");
         data.readData("./data/out_small3.txt");

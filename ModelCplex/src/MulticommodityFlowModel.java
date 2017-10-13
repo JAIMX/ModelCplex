@@ -860,7 +860,8 @@ public class MulticommodityFlowModel {
 	public static void main(String[] args) throws IOException, UnknownObjectException, IloException {
 		MulticommodityFlowModel test = new MulticommodityFlowModel();
 //		test.readData("out_small.txt");
-		test.readData("./data/temp.txt");
+//		test.readData("./data/temp.txt");
+		test.readData("./data/out_small3.txt");
 //		test.readData("./data/data1.txt");
 		test.graphTransfer();
 		test.ModelBuilding();
