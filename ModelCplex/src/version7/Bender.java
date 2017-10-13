@@ -974,7 +974,9 @@ public class Bender {
                         if (edgeSet.get(currentNode.branchEdge).setIndex == 3) {
                             cover[currentNode.branchTruck][T + 1] = -1;
                         } else {
-                            cover[currentNode.branchTruck][currentNode.branchEdge % (T + 1)] = -1;
+                        	Edge edge=edgeSet.get(currentNode.branchEdge);
+//                          cover[currentNode.branchTruck][currentNode.branchEdge % (T + 1)] = -1;  
+                        	cover[currentNode.branchTruck][edge.t1] = -1;
                         }
                     }
                 }
