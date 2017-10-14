@@ -465,7 +465,7 @@ public class Bender {
 
 		// start DFS
 		while (stack.size() > 0) {
-//			 System.out.println("Now stack.size= " + stack.size());
+			 System.out.println("Now stack.size= " + stack.size());
 
 			Node currentNode = stack.peek();
 
@@ -475,10 +475,9 @@ public class Bender {
 
 				if (currentNode.branchTruck >= 0) {
 					// delete some path in the current model firstly
-					// System.out.println("1-Deal with the branch of current
-					// node");
+					 System.out.println("1-Deal with the branch of current node");
 					if (currentNode.ifCover == true) {
-						// Cover.get(csurrentNode.branchTruck).add(currentNode.branchEdge);
+						// Cover.get(currentNode.branchTruck).add(currentNode.branchEdge);
 						int branchEdgeIndex = currentNode.branchEdge;
 						int startNode = data.edgeSet.get(branchEdgeIndex).start;
 
@@ -494,8 +493,7 @@ public class Bender {
 						notCover.get(currentNode.branchTruck).add(currentNode.branchEdge);
 					}
 
-					// System.out.println("2-Extract some column in BMP
-					// acoording to the branch");
+					 System.out.println("2-Extract some column in BMP according to the branch");
 					// extract column
 					if (currentNode.ifCover == true) { // Xak=1
 						// for (int i = 0; i < pathSet.size(); i++) {
@@ -581,7 +579,7 @@ public class Bender {
 				// add new column(subproblem,according to cover and not
 				/// cover;find a new class
 				/// Path)
-				// System.out.println("3-Start to add some path to BMP");
+				 System.out.println("3-Start to add some path to BMP");
 				// add new column(subproblem,according to cover and not
 				// cover;find a new class
 				// Path)
@@ -817,9 +815,7 @@ public class Bender {
 							currentNode.addCol.add(newPath);
 							check = true;
 							count++;
-							// System.out.println(
-							// "We add #" + count + " path to this node, and the
-							// path belong to truck " + k);
+							 System.out.println("We add #" + count + " path to this node, and the path belong to truck " + k);
 
 							// System.out.println("Now the master problem is
 							// "+master.toString());
