@@ -13,7 +13,8 @@ public class Bender {
 	 * Minimize Z=c'*y+f'x s.t A*y+B*x>=b y>=0 X in X
 	 */
 
-	static final double FUZZ = 1.0e-7;
+//	static final double FUZZ = 1.0e-7;
+	static final double FUZZ = 1.0e-4;
 
 	IloCplex master;
 	IloCplex sub;
@@ -66,7 +67,7 @@ public class Bender {
 		this.B = B;
 
 		this.initialX = initialX;
-		System.out.println("intialX is " + Arrays.toString(initialX));
+//		System.out.println("intialX is " + Arrays.toString(initialX));
 
 		T = data.T;
 		numOfCity = data.numberOfCities;
@@ -293,10 +294,12 @@ public class Bender {
 			}
 
 			// update xValues and LB
-//			if (feasibleCut.size() == 2 && optimalCut.size() == 1) {
+//			if (feasibleCut.size() == 2 && optimalCut.size() == 3) {
+//				System.out.println("Use cplex to check!");
 //				BMP_cplex();
 //			} else
 //				BMP();
+			
 //			BMP_cplex();
 
 			 BMP();
@@ -465,7 +468,7 @@ public class Bender {
 
 		// start DFS
 		while (stack.size() > 0) {
-			 System.out.println("Now stack.size= " + stack.size());
+//			 System.out.println("Now stack.size= " + stack.size());
 
 			Node currentNode = stack.peek();
 
@@ -475,7 +478,7 @@ public class Bender {
 
 				if (currentNode.branchTruck >= 0) {
 					// delete some path in the current model firstly
-					 System.out.println("1-Deal with the branch of current node");
+//					 System.out.println("1-Deal with the branch of current node");
 					if (currentNode.ifCover == true) {
 						// Cover.get(currentNode.branchTruck).add(currentNode.branchEdge);
 						int branchEdgeIndex = currentNode.branchEdge;
@@ -493,7 +496,7 @@ public class Bender {
 						notCover.get(currentNode.branchTruck).add(currentNode.branchEdge);
 					}
 
-					 System.out.println("2-Extract some column in BMP according to the branch");
+//					 System.out.println("2-Extract some column in BMP according to the branch");
 					// extract column
 					if (currentNode.ifCover == true) { // Xak=1
 						// for (int i = 0; i < pathSet.size(); i++) {
@@ -579,7 +582,7 @@ public class Bender {
 				// add new column(subproblem,according to cover and not
 				/// cover;find a new class
 				/// Path)
-				 System.out.println("3-Start to add some path to BMP");
+//				 System.out.println("3-Start to add some path to BMP");
 				// add new column(subproblem,according to cover and not
 				// cover;find a new class
 				// Path)
@@ -760,7 +763,7 @@ public class Bender {
 
 						// check shortest path's reduced cost
 						double pik = master.getDual(truckConstraint[k]);
-						if (totalPathCost - pik < -FUZZ) { // add this path as
+						if (totalPathCost - pik < -0.05) { // add this path as
 															// column of BMP, and
 															// update check to
 															// true
@@ -807,7 +810,7 @@ public class Bender {
 
 							// newPath.column = master.numVar(addColumn, 0,
 							// Double.MAX_VALUE);
-							newPath.column = master.numVar(addColumn, 0, 1);
+							newPath.column = master.numVar(addColumn, 0, 1,"path" + (pathSet.size()));
 							newPath.ifInModel = true;
 							newPath.edgeIndexSet = edgeIndexSet;
 							pathSet.add(newPath);
@@ -815,7 +818,7 @@ public class Bender {
 							currentNode.addCol.add(newPath);
 							check = true;
 							count++;
-							 System.out.println("We add #" + count + " path to this node, and the path belong to truck " + k);
+//							 System.out.println("We add #" + count + " path to this node, and the path belong to truck " + k);
 
 							// System.out.println("Now the master problem is
 							// "+master.toString());
@@ -856,7 +859,40 @@ public class Bender {
 							break;
 						}
 					}
-
+					
+					
+					
+//					if(count==1000) {
+//						master.exportModel("check.lp");
+//						System.out.println("Now ifAllZero="+ifAllZero);
+////			            System.out.println("Current node branch information: ");
+////			            Edge e = edgeSet.get(currentNode.branchEdge);
+////			            System.out.println("for truck " + currentNode.branchTruck + ", edge " + e.start + "->" + e.end+":"+currentNode.ifCover);
+//						System.out.println("objective= " + master.getObjValue());
+//						System.out.println("z= " + Arrays.toString(master.getValues(z)));
+//	                    System.out.print("optPrice= ");
+//	                    System.out.println(Arrays.toString(optPrice));
+//	                    System.out.print("feaPrice= ");
+//	                    System.out.println(Arrays.toString(feaPrice));
+//	                    System.out.print("truckPrice= ");
+//	                    System.out.println(Arrays.toString(truckPrice));
+//
+////						for (int pathIndex = 0; pathIndex < pathSet.size(); pathIndex++) {
+////							Path path = pathSet.get(pathIndex);
+////							if (path.ifInModel == true) {
+////								System.out.println("path #" + pathIndex + "= " + master.getValue(path.column));
+////							}
+////						}
+//						
+//						
+//						
+//						
+//					}
+//					
+//					assert(count<=1000):" error!!!!";
+					
+					
+					
 					if (!check || (count > 1000 && ifAllZero)) {
 						break;
 					}
@@ -870,8 +906,7 @@ public class Bender {
 				// System.out.println("There is still path with negative reduced
 				// cost.");
 				// }
-				// System.out.println("We add " + count + " paths to
-				// currentNode.");
+//				 System.out.println("We add " + count + " paths to currentNode.");
 				//
 				// if (ifAllZero) {
 				// System.out.println("All artifacial vars equals 0");
@@ -1176,12 +1211,13 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-		// data.readData("./data/temp.txt");
+//		 data.readData("./data/temp.txt");
+//		data.readData("./data/out2.txt");
 		// System.out.println("Read data done!");
 //		 data.readData("./data/out_small.txt");
 //		 data.readData("./data/out_small2.txt");
-//		 data.readData("./data/data1.txt");
-		 data.readData("./data/data2.txt");
+		 data.readData("./data/data1.txt");
+//		 data.readData("./data/data2.txt");
 //		data.readData("./data/out_small3.txt");
 //		 data.readData("./data/out_small3_4.txt");
 		data.graphTransfer();

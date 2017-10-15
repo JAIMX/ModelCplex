@@ -76,7 +76,7 @@ public class Data {
 		String temp = new String();
 		// ---read "cities"---//
 		temp = in.nextLine();
-		assert (temp.substring(0, 3) == "City") : "Wrong cities";
+//		assert (temp.substring(0, 3) == "City") : "Wrong cities";
 		int lIndex = temp.indexOf("'", 0);
 		int rIndex = temp.indexOf("'", lIndex + 1);
 		int citiesIndex = 0;
@@ -92,7 +92,7 @@ public class Data {
 
 		// ---read "demandQuantity"---//
 		temp = in.nextLine();
-		assert (temp.substring(0, 5) == "demand") : "Wrong demandQuantity";
+//		assert (temp.substring(0, 5) == "demand") : "Wrong demandQuantity";
 		temp = in.nextLine();
 
 		while (!temp.equals("}")) {
@@ -122,7 +122,7 @@ public class Data {
 		numberOfDemandPair = demandPairs.size();
 
 		temp = in.nextLine();
-		assert (temp.substring(0, 4) == "coord") : "Wrong coordinate";
+//		assert (temp.substring(0, 4) == "coord") : "Wrong coordinate";
 		// ---read "coordinate"---//
 		xx = new double[numberOfCities];
 		yy = new double[numberOfCities];
@@ -159,7 +159,7 @@ public class Data {
 		}
 
 		temp = in.nextLine();
-		assert (temp.substring(0, 3) == "open") : "Wrong openTime";
+//		assert (temp.substring(0, 3) == "open") : "Wrong openTime";
 		openTime = new double[numberOfCities];
 
 		// ---read "openTime"---//
@@ -183,7 +183,7 @@ public class Data {
 		}
 
 		temp = in.nextLine();
-		assert (temp.substring(0, 4) == "close") : "Wrong closeTime";
+//		assert (temp.substring(0, 4) == "close") : "Wrong closeTime";
 		closeTime = new double[numberOfCities];
 
 		// ---read "closeTime"---//
@@ -207,7 +207,7 @@ public class Data {
 		}
 
 		temp = in.nextLine();
-		assert (temp.substring(0, 6) == "arrival") : "Wrong arrivalTime";
+//		assert (temp.substring(0, 6) == "arrival") : "Wrong arrivalTime";
 		arrivalTime = new double[numberOfCities];
 
 		// ---read "arrivalTime"---//
@@ -232,7 +232,7 @@ public class Data {
 		T=(int) arrivalTime[0];
 
 		temp = in.nextLine();
-		assert (temp.substring(0, 6) == "process") : "Wrong processingTime";
+//		assert (temp.substring(0, 6) == "process") : "Wrong processingTime";
 		processingTime = new double[numberOfCities];
 
 		// ---read "processingTime"---//
@@ -288,7 +288,7 @@ public class Data {
 
 		// ---read "trucks"---//
 		temp = in.nextLine();
-		assert (temp.substring(0, 5) == "trucks") : "Wrong trucks";
+//		assert (temp.substring(0, 5) == "trucks") : "Wrong trucks";
 		temp = in.nextLine();
 		int trucksIndex = 0;
 
@@ -311,7 +311,7 @@ public class Data {
 
 		// ---read "truckCapacity"---//
 		temp = in.nextLine();
-		assert (temp.substring(0, 4) == "truck") : "Wrong trucksCapacity";
+//		assert (temp.substring(0, 4) == "truck") : "Wrong trucksCapacity";
 		truckCapacity = new int[numberOfTrucks];
 
 		while (!temp.equals("}")) {
@@ -338,7 +338,7 @@ public class Data {
 		truckStartNode = new int[numberOfTrucks];
 
 		temp = in.nextLine();
-		assert (temp.substring(0, 4) == "truck") : "Wrong truckStartNode";
+//		assert (temp.substring(0, 4) == "truck") : "Wrong truckStartNode";
 		temp = in.nextLine();
 
 		while (!temp.equals("}")) {
