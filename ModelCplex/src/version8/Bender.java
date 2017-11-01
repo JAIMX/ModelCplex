@@ -1215,13 +1215,13 @@ public class Bender {
 
 	public static void main(String[] args) throws IOException, IloException {
 		Data data = new Data();
-//		 data.readData("./data/temp.txt");
+		 data.readData("./data/temp.txt");
 //		data.readData("./data/out2.txt");
 		// System.out.println("Read data done!");
 //		 data.readData("./data/out_small.txt");
 //		 data.readData("./data/out_small2.txt");
-		 data.readData("./data/data1.txt");
-		 data.readData("./data/data1_1.txt");
+//		 data.readData("./data/data1.txt");
+//		 data.readData("./data/data1_1.txt");
 //		 data.readData("./data/data2.txt");
 //		data.readData("./data/out_small3.txt");
 //		 data.readData("./data/out_small3_4.txt");
