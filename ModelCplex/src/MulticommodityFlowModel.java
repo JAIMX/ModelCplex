@@ -862,10 +862,12 @@ public class MulticommodityFlowModel {
 //		test.readData("out_small.txt");
 //		test.readData("./data/temp.txt");
 //		test.readData("./data/out_small3.txt");
+//		test.readData("./data/out_small2.txt");
 //		test.readData("./data/data2.txt");
-		test.readData("./data/data1_1.txt");
+//		test.readData("./data/data1_1.txt");
 //		test.readData("./data/out2.txt");
 //		test.readData("./data/out_small3_4.txt");
+		test.readData("./data/check10_50_3.txt");
 		test.graphTransfer();
 		test.ModelBuilding();
 		test.output();
