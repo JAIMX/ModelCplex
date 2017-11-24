@@ -507,26 +507,26 @@ public class MulticommodityFlowModel {
 		// add AD:(nT,Dk)
 		for (int node = 0; node < numberOfCities; node++) {
 			int nodeIndex = node * (T + 1) + T;
-//			for (int d = 0; d < numberOfCities; d++) {
-//				int dIndex = numberOfCities * (T + 2) + d;
-//				Edge edge = new Edge();
-//				edge.pointTo = dIndex;
-//				edge.length = length[node][d];
-//				edge.setIndex = 4;
-//				edge.u = node;
-//				edge.v = d;
-//				edge.t1 = T;
-//				edge.t2 = -1;
-//				distance.get(nodeIndex).add(edge);
-//				connect[nodeIndex][dIndex] = true;
-//
-//				Edge2 edge2 = new Edge2();
-//				edge2.pointFrom = nodeIndex;
-//				edge2.length = edge.length;
-//				edge2.setIndex = 4;
-//				distanceReverse.get(edge.pointTo).add(edge2);
-//			}
-			
+			// for (int d = 0; d < numberOfCities; d++) {
+			// int dIndex = numberOfCities * (T + 2) + d;
+			// Edge edge = new Edge();
+			// edge.pointTo = dIndex;
+			// edge.length = length[node][d];
+			// edge.setIndex = 4;
+			// edge.u = node;
+			// edge.v = d;
+			// edge.t1 = T;
+			// edge.t2 = -1;
+			// distance.get(nodeIndex).add(edge);
+			// connect[nodeIndex][dIndex] = true;
+			//
+			// Edge2 edge2 = new Edge2();
+			// edge2.pointFrom = nodeIndex;
+			// edge2.length = edge.length;
+			// edge2.setIndex = 4;
+			// distanceReverse.get(edge.pointTo).add(edge2);
+			// }
+
 			int dIndex = numberOfCities * (T + 2) + node;
 			Edge edge = new Edge();
 			edge.pointTo = dIndex;
@@ -541,7 +541,7 @@ public class MulticommodityFlowModel {
 
 			Edge2 edge2 = new Edge2();
 			edge2.pointFrom = nodeIndex;
-			edge2.length =0;
+			edge2.length = 0;
 			edge2.setIndex = 4;
 			distanceReverse.get(edge.pointTo).add(edge2);
 		}
@@ -787,13 +787,13 @@ public class MulticommodityFlowModel {
 				}
 			}
 
-			cplex.exportModel("MulticommodityFlowModel.lp");
+			// cplex.exportModel("MulticommodityFlowModel.lp");
 			// cplex.setParam(IloCplex.Param.RootAlgorithm,
 			// IloCplex.Algorithm.Primal);
 			cplex.setParam(IloCplex.Param.Emphasis.Memory, true);
 			cplex.setParam(IloCplex.IntParam.NodeFileInd, 2);
 			cplex.setParam(IloCplex.IntParam.Threads, 1);
-			// cplex.setParam(IloCplex.DoubleParam.EpGap, 0.04);
+//			cplex.setParam(IloCplex.DoubleParam.EpGap, 0.025);
 			// cplex.setParam(IloCplex.IntParam.MIPEmphasis, 3);
 			// cplex.setParam(IloCplex.IntParam.pruning, 1);
 			// formulation1.setParam(IloCplex.Param.MIP.Strategy.File,3); // not
@@ -802,7 +802,7 @@ public class MulticommodityFlowModel {
 			cplex.setParam(IloCplex.Param.WorkMem, 1024);
 
 			cplex.solve();
-			System.out.println("The obj= "+cplex.getObjValue());
+			System.out.println("The obj= " + cplex.getObjValue());
 
 			// System.out.println(cplex.solve());
 
@@ -815,20 +815,33 @@ public class MulticommodityFlowModel {
 
 	public void output() throws FileNotFoundException, UnknownObjectException, IloException {
 		// output the solution
-		PrintWriter out = new PrintWriter("outcome_small.txt");
+		PrintWriter out = new PrintWriter("outcome_check.txt");
 
 		// X[i][j][k]
 		// out.println("X[i][j][k]");
 		out.println("Variable X");
-		for (int i = 0; i < numberOfCities * (T + 3); i++) {
-			for (int j = 0; j < numberOfCities * (T + 3); j++) {
-				for (int k = 0; k < numberOfTrucks; k++) {
+		// for (int i = 0; i < numberOfCities * (T + 3); i++) {
+		// for (int j = 0; j < numberOfCities * (T + 3); j++) {
+		// for (int k = 0; k < numberOfTrucks; k++) {
+		// if (connect[i][j]) {
+		// if (Math.abs(cplex.getValue(X[i][j][k]) - 0) > e) {
+		// out.println("vehicle " + k + ": " + getName(i) + "->" + getName(j) + " = "
+		// + cplex.getValue(X[i][j][k]));
+		// }
+		// // out.print(cplex.getValue(X[i][j][k]) + " ");
+		// }
+		// }
+		// }
+		// }
+
+		for (int k = 0; k < numberOfTrucks; k++) {
+			for (int i = 0; i < numberOfCities * (T + 3); i++) {
+				for (int j = 0; j < numberOfCities * (T + 3); j++) {
 					if (connect[i][j]) {
 						if (Math.abs(cplex.getValue(X[i][j][k]) - 0) > e) {
 							out.println("vehicle " + k + ": " + getName(i) + "->" + getName(j) + " = "
 									+ cplex.getValue(X[i][j][k]));
 						}
-						// out.print(cplex.getValue(X[i][j][k]) + " ");
 					}
 				}
 			}
@@ -837,14 +850,32 @@ public class MulticommodityFlowModel {
 		// y[i][j][p]
 		// out.println();
 		out.println("y[i][j][p]");
-		for (int i = 0; i < numberOfCities * (T + 1); i++) {
+		// for (int i = 0; i < numberOfCities * (T + 1); i++) {
+		// for (int j = 0; j < numberOfCities * (T + 1); j++) {
+		//
+		// for (int p = 0; p < numberOfDemandPair; p++) {
+		// if (connect[i][j]) {
+		// if (Math.abs(cplex.getValue(y[i][j][p]) - 0) > e) {
+		// out.println(getName(i) + "->" + getName(j) + "for demand " +
+		// demandPairs.get(p).s + "->"
+		// + demandPairs.get(p).t + " :" + cplex.getValue(y[i][j][p]));
+		//
+		// // out.print(cplex.getValue(x[i][j][k][od]) + " ");
+		// }
+		// }
+		// }
+		//
+		// }
+		// }
+
+		for (int p = 0; p < numberOfDemandPair; p++) {
+			out.println("for demand " + demandPairs.get(p).s + "->" + demandPairs.get(p).t);
 			for (int j = 0; j < numberOfCities * (T + 1); j++) {
 
-				for (int p = 0; p < numberOfDemandPair; p++) {
+				for (int i = 0; i < numberOfCities * (T + 1); i++) {
 					if (connect[i][j]) {
 						if (Math.abs(cplex.getValue(y[i][j][p]) - 0) > e) {
-							out.println(getName(i) + "->" + getName(j) + "for demand " + demandPairs.get(p).s + "->"
-									+ demandPairs.get(p).t + " :" + cplex.getValue(y[i][j][p]));
+							out.println(getName(i) + "->" + getName(j) + " :" + cplex.getValue(y[i][j][p]));
 
 							// out.print(cplex.getValue(x[i][j][k][od]) + " ");
 						}
@@ -859,15 +890,16 @@ public class MulticommodityFlowModel {
 
 	public static void main(String[] args) throws IOException, UnknownObjectException, IloException {
 		MulticommodityFlowModel test = new MulticommodityFlowModel();
-//		test.readData("out_small.txt");
-//		test.readData("./data/temp.txt");
-//		test.readData("./data/out_small3.txt");
-//		test.readData("./data/out_small2.txt");
-//		test.readData("./data/data2.txt");
-//		test.readData("./data/data1_1.txt");
-//		test.readData("./data/out2.txt");
-//		test.readData("./data/out_small3_4.txt");
-		test.readData("./data/check10_50_3.txt");
+		// test.readData("out_small.txt");
+		// test.readData("./data/temp.txt");
+		// test.readData("./data/out_small3.txt");
+		// test.readData("./data/out_small2.txt");
+		// test.readData("./data/data2.txt");
+		// test.readData("./data/data1_1.txt");
+		// test.readData("./data/out2.txt");
+		// test.readData("./data/out_small3_4.txt");
+		// test.readData("./data/check10_50_3.txt");
+		test.readData("./data/report4_4.txt");
 		test.graphTransfer();
 		test.ModelBuilding();
 		test.output();
