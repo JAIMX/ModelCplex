@@ -405,8 +405,15 @@ public class MulticommodityFlowModel {
 			for (int t = 0; t < T; t++) {
 				Edge edge = new Edge();
 				int nodeIndex = node * (T + 1) + t;
+				
+				//change cost to eliminate symmetry
+				double changeCost=t*0.0001;
+				
 				edge.pointTo = nodeIndex + 1;
-				edge.length = 0;
+				
+				//edge.length = 0;
+				edge.length=changeCost;
+				
 				edge.setIndex = 2;
 				edge.u = node;
 				edge.v = node;
@@ -417,7 +424,9 @@ public class MulticommodityFlowModel {
 
 				Edge2 edge2 = new Edge2();
 				edge2.pointFrom = nodeIndex;
-				edge2.length = 0;
+				//edge2.length = 0;
+				edge2.length=changeCost;
+				
 				edge2.setIndex = 2;
 				distanceReverse.get(nodeIndex + 1).add(edge2);
 
@@ -891,17 +900,17 @@ public class MulticommodityFlowModel {
 	public static void main(String[] args) throws IOException, UnknownObjectException, IloException {
 		MulticommodityFlowModel test = new MulticommodityFlowModel();
 		// test.readData("out_small.txt");
-		// test.readData("./data/temp.txt");
+//		 test.readData("./data/temp.txt");
 		// test.readData("./data/out_small3.txt");
-		// test.readData("./data/out_small2.txt");
+//		 test.readData("./data/out.txt");
 		// test.readData("./data/data2.txt");
-		// test.readData("./data/data1_1.txt");
-		// test.readData("./data/out2.txt");
+		 test.readData("./data/symmetry.txt");
+//		 test.readData("./data/out2.txt");
 		// test.readData("./data/out_small3_4.txt");
 		// test.readData("./data/check10_50_3.txt");
-		test.readData("./data/report4_4.txt");
+//		test.readData("./data/report4_4.txt");
 		test.graphTransfer();
 		test.ModelBuilding();
-		test.output();
+//		test.output();
 	}
 }
