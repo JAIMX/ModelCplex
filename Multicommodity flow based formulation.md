@@ -1,4 +1,4 @@
-Model
+﻿Model
 ===================
 
 
@@ -12,6 +12,7 @@ Parameters
  - $\alpha:$ fixed cost per day per truck
  - $\beta$ :   transportation cost per package per unit distance
  - $C_{k}$:   capacity of truck $k $
+ - $\gamma_{k}$ :  fixed cost for the use of truck $k $
  - $L:$ max number of legs allowed to be traveled by a truck
  -  $D:$ max distance allowed to be traveled by a truck
  -  $Speed:$ average speed of trucks, if necessary it can be truck specific
@@ -84,7 +85,7 @@ $$
 <br/>
 
 ***Minimize***
-$\sum_{(i,j)\in A^{'}}\sum_{k\in K} \frac{\alpha l_{ij}X_{ij}^{k}}{Speed*DrivingTimePerDay}+ \sum_{(i,j)\in \tilde{A}\cup A_{T}}\sum_{p\in P} \beta l_{ij}y_{ij}^{p}$
+$\sum_{k\in K} \sum_{(i,j)\in \tilde{A}\cup A_{T}}\frac{\alpha l_{ij}X_{ij}^{k}}{Speed*DrivingTimePerDay}+\sum_{k\in K} \sum_{(o_{k},i)\in A^{'}}\gamma_{k}X_{o_{k},i}^{k}+\sum_{(i,j)\in \tilde{A}\cup A_{T}}\sum_{p\in P} \beta l_{ij}y_{ij}^{p}$
 
 ***Subject to:***
 
@@ -93,14 +94,14 @@ $\sum_{(i,j)\in A^{'}}\sum_{k\in K} \frac{\alpha l_{ij}X_{ij}^{k}}{Speed*Driving
    
    $\sum_{(o_{k},i)\in A^{'}}X_{o_{k},i}^{k}\leqslant 1  \qquad \forall k\in K  \qquad$(2)
 
-   $\sum_{(o_{k^{'}},i)\in A^{'},o_{k^{'}}\neq o_{k}}X_{o_{k^{'}},i}^{k}=0  \qquad \forall k\in K  \qquad$(3)
+   $\sum_{(o_{k^{'}},i)\in A^{'},k^{'}\neq k}X_{o_{k^{'}},i}^{k}=0  \qquad \forall k\in K  \qquad$(3)
 
 
    $\sum_{(i,d_{k^{'}})\in A^{'},d_{k^{'}}\neq d_{k}}X_{i,d_{k^{'}}}^{k}=0  \qquad \forall k\in K  \qquad$(4)  
    
    $\sum_{(i,j)\in\tilde{A}}X_{ij}^{k}\leqslant L  \qquad\forall k\in K  \qquad$(5)
    
-   $\sum_{(i,j)\in A^{'}}l_{ij}X_{ij}^{k}\leqslant D  \qquad\forall k\in K\qquad$(6)
+   $\sum_{(i,j)\in \tilde{A}}l_{ij}X_{ij}^{k}\leqslant D  \qquad\forall k\in K\qquad$(6)
    
   
    
